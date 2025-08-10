@@ -136,27 +136,32 @@ justificativa: A origem 0.0.0.0/0 é utilizada para que o Application Load Balan
 - Regras de saída:
 Você pode manter a regra padrão (Todo o tráfego para 0.0.0.0/0). O Load Balancer precisa dessa regra para encaminhar o tráfego para as instâncias EC2.
 
-
-
 - Clique em **"Criar grupo de segurança"**. 
 
 ## Etapa 2.3: Criação do Security Group EC2
+Este Security Group tem o propósito de proteger as instâncias EC2 que rodam os **contêineres Docker com o WordPress.** As regras a seguir foram configuradas para garantir que apenas tráfego autorizado e proveniente de fontes confiáveis chegue até os servidores da aplicação.
 
-Antes de criamos a regra do security group do RDS, precisamos primeiro criar o da EC2. O mesmo possui o propósito de proteger asn instâncias EC2 que rodam o contâiner do docker. A seguinte configuração será adicionado nessa regra.
+- Repita o mesmo processo descrito na criação do security group do ALB.
 
+- Regras de entradas:
+<img width="1865" height="314" alt="image" src="https://github.com/user-attachments/assets/a9f30326-dc33-410f-9676-1fc376f34951" />
 
+Aqui foram adicionadas duas regras de entrada:
+- 1° Regra:
 
+  * **Tipo:** HTTP
+  * **Intervalos de portas:** 80 
+  * **Origem:** Exclusivamente do Security Group do Application Load Balancer (`alb-security group`).
 
-Agora vamos adicionar uma regra de entrada que contará com as seguintes configurações:
+ Esta regra assegura que todo acesso ao WordPress passe primeiro pelo Load Balancer, impedindo conexões diretas vindas da internet para as instâncias EC2. Dessa forma, aplicamos o princípio do menor privilégio e mantemos a arquitetura em camadas (layered security).
 
-  - Tráfego Web (porta 80 – HTTP):
+- 2° Regra:
 
-  - Origem: Exclusivamente do Security Group do Application Load Balancer (alb-security-group, a ser criado).
+  * **Tipo:** TCP Personalizado
+  * **Intervalos de portas:** 8080
+  * **Origem:** Exclusivamente do seu endereço IP, por motivos de segurança, não irei mostrar aqui, mas quando você clicar em **"Meu IP"** irá mostrar seu endereço IP.
 
-
-
-Essa regra assegura que todo acesso ao WordPress passe primeiro pelo Load Balancer, impedindo conexões diretas vindas da internet para as instâncias EC2. Dessa forma, aplicamos o princípio do menor privilégio e mantemos a arquitetura em camadas (layered security).
-
+ Esta regra permite que o administrador acesse a interface do phpMyAdmin pela porta `8080`. Ao restringir a origem a um IP específico, garantimos que esta ferramenta administrativa não fique exposta à internet pública, uma medida de segurança crucial nesta aplicação.
 
 
 ## Etapa 2.4: Criação do Security Group RDS
@@ -167,19 +172,17 @@ Vamos novamente criar um novo grupo de segurança, adicionando o nome, seleciona
 
 <img width="1905" height="631" alt="image" src="https://github.com/user-attachments/assets/d665c394-bb9c-4fb0-9c50-88a36e73ffb6" />
 
-* Tipo: MYSQL/Aurora
+* **Tipo:** MYSQL/Aurora
 
-* Protocolo: TCP
+* **Protocolo:** TCP
 
-* Intervalo de portas: 3306
+* **Intervalo de portas:** 3306
 
-* Origem: Personalizado
+* **Origem:** Personalizado
 
 * Adicione o security group da EC2
 
 * As regras de saída serão mantidas padrão
-
-
 
 Essa configuração permite que somente as EC2 que executam o WordPress possam se conectar ao banco de dados RDS, impedindo qualquer acesso direto da internet ou de outros serviços não autorizados. Logo após as configurações, clique em "Criar grupo de Segurança.
 
@@ -189,23 +192,22 @@ Essa configuração permite que somente as EC2 que executam o WordPress possam s
 
 O Security Group EFS foi criado para proteger o sistema de arquivos compartilhado utilizado pelas instâncias EC2 para armazenar conteúdos persistentes do WordPress. Sua função é garantir que apenas instâncias autorizadas possam montar e acessar os arquivos do EFS.
 
-Criaremos novamente outro grupo de seguranço, adicioando o nome, selecionando a VPC já criada e adicionando as seguinte regras de entrada.
+Criaremos novamente outro grupo de segurança, adicionando o nome, selecionando a VPC já criada e adicionando as seguintes regras de entrada.
 
 
 <img width="1905" height="504" alt="image" src="https://github.com/user-attachments/assets/6ed92812-c6f3-4cf3-bfad-74940ea06197" />
 
-* Tipo: NFS
+* **Tipo:** NFS
 
-* Protocolo: TCP
+* **Protocolo:** TCP
 
-* Intervalo de portas: 2049
+* **Intervalo de portas: **2049
 
 * Origem: Exclusivamente do Security Group das instâncias EC2 (seu grupo de segurança da EC2).
 
 * As regras de saída serão mantidas como padrão
 
-
-Essa configuração adicionada permiti que apenas as EC2 do projeto acessem os arquivos do EFS e impedem que qualquer outro recurso (interno ou externo) consiga montar ou ler o sistema de arquivos. Logo após adicionar essas configurações, cliquem em "Criar grupo de segurança.
+Essa configuração adicionada permite que apenas as EC2 do projeto acessem os arquivos do EFS e impedem que qualquer outro recurso (interno ou externo) consiga montar ou ler o sistema de arquivos. Logo após adicionar essas configurações, clique em "Criar grupo de segurança.
 
 ## Etapa 3: Criação do Amazon EFS (Elastic File System)
  **Amazon EFS (Elastic File System)** é um serviço da AWS que atua como um sistema de arquivos centralizado e compartilhado, semelhante a um “HD de rede” na nuvem da AWS. Ele fornece armazenamento escalável e de alta disponibilidade, permitindo que múltiplas instâncias EC2 acessem os mesmos arquivos simultaneamente. Sua implementação é essencial para garantir a **persistência e consistência dos dados** em arquiteturas com mais de uma instância. Por exemplo, se um usuário fizer upload de uma imagem para a instância **A**, a instância **B** não terá acesso a esse arquivo caso utilize apenas armazenamento local, o que pode gerar falhas e inconsistências na aplicação. Com o EFS, todos os arquivos ficam centralizados, garantindo que qualquer instância conectada tenha acesso imediato às alterações realizadas por outra, eliminando problemas de sincronização e preservando a integridade dos dados.
