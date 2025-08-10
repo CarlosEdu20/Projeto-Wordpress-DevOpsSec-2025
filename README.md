@@ -144,10 +144,7 @@ O Security Group EFS foi criado para proteger o sistema de arquivos compartilhad
 Criaremos novamente outro grupo de seguranço, adicioando o nome, selecionando a VPC já criada e adicionando as seguinte regras de entrada.
 
 
-
 <img width="1905" height="504" alt="image" src="https://github.com/user-attachments/assets/6ed92812-c6f3-4cf3-bfad-74940ea06197" />
-
-
 
 * Tipo: NFS
 
@@ -160,8 +157,64 @@ Criaremos novamente outro grupo de seguranço, adicioando o nome, selecionando a
 * As regras de saída serão mantidas como padrão
 
 
-
 Essa configuração adicionada permiti que apenas as EC2 do projeto acessem os arquivos do EFS e impedem que qualquer outro recurso (interno ou externo) consiga montar ou ler o sistema de arquivos. Logo após adicionar essas configurações, cliquem em "Criar grupo de segurança.
+
+## Etapa 3: Criação do Amazon EFS (Elastic File System)
+ **Amazon EFS (Elastic File System)** é um serviço da AWS que atua como um sistema de arquivos centralizado e compartilhado, semelhante a um “HD de rede” na nuvem da AWS. Ele fornece armazenamento escalável e de alta disponibilidade, permitindo que múltiplas instâncias EC2 acessem os mesmos arquivos simultaneamente. Sua implementação é essencial para garantir a **persistência e consistência dos dados** em arquiteturas com mais de uma instância. Por exemplo, se um usuário fizer upload de uma imagem para a instância **A**, a instância **B** não terá acesso a esse arquivo caso utilize apenas armazenamento local, o que pode gerar falhas e inconsistências na aplicação. Com o EFS, todos os arquivos ficam centralizados, garantindo que qualquer instância conectada tenha acesso imediato às alterações realizadas por outra, eliminando problemas de sincronização e preservando a integridade dos dados.
+
+As seguintes configurações serão usadas no EFS:
+
+**Classe de Armazenamento (Regional):** Utilizei a classe de armazenamento "Regional", que cópia os dados automaticamente em múltiplas Zonas de Disponibilidade. Isso garante que o sistema de arquivos seja tão resiliente e disponível quanto o resto da nossa aplicação, sobrevivendo até mesmo à falha completa de um data center.
+
+**Pontos de Acesso (Mount Targets):** Para permitir que as instâncias na VPC se conectem ao EFS, os Mount Targets são criados automaticamente na criação do EFS. Cada Mount Target é uma "tomada de rede" com um endereço de IP, posicionada estrategicamente em nossas sub-redes privadas onde estão as EC2. Essa configuração garante o acesso seguro e de alta performance a partir da camada de aplicação.
+
+**Segurança de Acesso:** O acesso aos Mount Targets é rigorosamente controlado pelo security group do efs, que só permite conexões na porta 2049 (protocolo NFS) vindas exclusivamente do security group da EC2.
+
+## Etapa 3.1: Passo a passo para criação do EFS na AWS
+
+- No console da AWS, pesquise pelo serviço do EFS.
+
+  <img width="1888" height="809" alt="image" src="https://github.com/user-attachments/assets/7506a7ac-0f90-437b-b4ec-359e0a1cb34c" />
+  
+- Clique em "Criar sistema de arquivos".
+
+<img width="1013" height="900" alt="image" src="https://github.com/user-attachments/assets/f032493a-315c-48b5-b204-a74f3424e65d" />
+
+- Clique em "Personalizar"
+
+<img width="1895" height="809" alt="image" src="https://github.com/user-attachments/assets/a63c8cd8-e675-499c-8938-c6e670f6c4a9" />
+
+- Escolha um nome para seu EFS
+- Tipo do sistema de arquivos: Regional
+- Clique em "próximo"
+
+<img width="1846" height="828" alt="image" src="https://github.com/user-attachments/assets/8ef2bf86-7862-4e36-9275-4c90c88c3d8f" />
+
+- Zona de disponibilidade: `us-east-2a`, `us-east-2b`
+- ID da sub-rede: `subnet-private3`, `subnet-private4`
+- Grupos de segurança: `security-group efs`
+- Clique em **"próximo"**
+- Após revisar seu EFS, clique em **"Criar"**
+
+<img width="1911" height="837" alt="image" src="https://github.com/user-attachments/assets/879c3475-b2b0-404a-9c42-ffd2d5fd82b9" />
+
+Após a criação do seu EFS, anote o ID do Sistema de arquivos (ex: fs-0123...) ou o endereço de IP de um dos Mount Targets. Essa informação será útil para o script user-data que irá montar o EFS automaticamente nas instâncias EC2.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
