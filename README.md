@@ -130,15 +130,19 @@ Este primeiro Security Group irá atuar como uma **porta de entrada principal** 
   * **Protocolo:** TCP
   * **Intervalos de portas:** 80
   * **Origem:** Qualquer lugar-IPv4 (0.0.0.0/0).
+ 
+justificativa: A origem 0.0.0.0/0 é utilizada para que o Application Load Balancer é o ponto de acesso público do WordPress e precisa aceitar conexões de qualquer usuário da internet.
 
 - Regras de saída:
 Você pode manter a regra padrão (Todo o tráfego para 0.0.0.0/0). O Load Balancer precisa dessa regra para encaminhar o tráfego para as instâncias EC2.
+
+
 
 - Clique em **"Criar grupo de segurança"**. 
 
 ## Etapa 2.3: Criação do Security Group EC2
 
-Antes de criamos a regra do security group do RDS, precisamos primeiro criar o da EC2. O mesmo possui o propósito de proteger as instâncias EC2 que rodam o contâiner do docker. A seguinte configuração será adicionado nessa regra.
+Antes de criamos a regra do security group do RDS, precisamos primeiro criar o da EC2. O mesmo possui o propósito de proteger asn instâncias EC2 que rodam o contâiner do docker. A seguinte configuração será adicionado nessa regra.
 
 
 
