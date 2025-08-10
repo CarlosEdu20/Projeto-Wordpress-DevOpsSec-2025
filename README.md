@@ -81,10 +81,87 @@ As configurações escolhidas para o RDS foram:
 ## Etapa 2.1: Security Groups
 Os Security Groups (SGs) atuam como firewalls virtuais para nossos recursos na nuvem. Eles são o principal mecanismo de controle de tráfego, funcionando como porteiros que decidem exatamente quem pode entrar e em qual porta. Para este projeto, criei uma "cadeia de confiança" entre os SGs, garantindo o princípio do menor privilégio, onde cada camada só confia na camada imediatamente anterior a ela.
 
-### Etapa 2.2: Criação do Security Group EC2
-Antes de criamos a regra do security group do RDS, precisamos primeiro criar o da EC2. O mesmo possui o propósito de proteger as instâncias EC2 que rodam os contêineres Docker com o WordPress e o phpMyAdmin.
-- **Regras de Entrada Principais:**
-    * **Tráfego Web:** Permite tráfego na porta 80 (HTTP) vindo apenas do Security Group do Application Load Balancer (alb-sg, a ser criado). Isso garante que todo o tráfego dos usuários passe primeiro pelo balanceador.
+## Etapa 2.2: Criação do Security Group EC2
+
+Antes de criamos a regra do security group do RDS, precisamos primeiro criar o da EC2. O mesmo possui o propósito de proteger as instâncias EC2 que rodam o contâiner do docker. A seguinte configuração será adicionado nessa regra.
+
+- Na aba da EC2 vá em **"Security Groups"**
+
+- Depois clique em **"Criar Grupo de Segurança"**
+
+<img width="1905" height="631" alt="image" src="https://github.com/user-attachments/assets/c4c5d6dd-236b-4f0a-9310-74c8a865a188" />
+
+
+
+- Insira o nome do grupo de segurança.
+
+- Adicione alguma descrição para não se perder.
+
+- Selecione a VPC que você criou.
+
+- Agora vamos adicionar uma regra de entrada que contará com as seguintes configurações:
+
+  * Tráfego Web (porta 80 – HTTP):
+
+  * Origem: Exclusivamente do Security Group do Application Load Balancer (alb-security-group, a ser criado).
+
+
+
+Essa regra assegura que todo acesso ao WordPress passe primeiro pelo Load Balancer, impedindo conexões diretas vindas da internet para as instâncias EC2. Dessa forma, aplicamos o princípio do menor privilégio e mantemos a arquitetura em camadas (layered security).
+
+
+
+## Etapa 2.3: Criação do Security Group RDS
+
+O Security Group RDS foi configurado para proteger o banco de dados relacional utilizado pelo WordPress. Seu objetivo é restringir ao máximo o acesso, permitindo conexões apenas das instâncias EC2 autorizadas.
+
+Vamos novamente criar um novo grupo de segurança, adicionando o nome, selecionando a VPC que foi criada, porém vamos adicionar a seguinte regra de entrada.
+
+<img width="1905" height="631" alt="image" src="https://github.com/user-attachments/assets/d665c394-bb9c-4fb0-9c50-88a36e73ffb6" />
+
+* Tipo: MYSQL/Aurora
+
+* Protocolo: TCP
+
+* Intervalo de portas: 3306
+
+* Origem: Personalizado
+
+* Adicione o security group da EC2
+
+* As regras de saída serão mantidas padrão
+
+
+
+Essa configuração permite que somente as EC2 que executam o WordPress possam se conectar ao banco de dados RDS, impedindo qualquer acesso direto da internet ou de outros serviços não autorizados. Logo após as configurações, clique em "Criar grupo de Segurança.
+
+
+
+## Etapa 2.4: Criação do Security Group para o EFS
+
+O Security Group EFS foi criado para proteger o sistema de arquivos compartilhado utilizado pelas instâncias EC2 para armazenar conteúdos persistentes do WordPress. Sua função é garantir que apenas instâncias autorizadas possam montar e acessar os arquivos do EFS.
+
+Criaremos novamente outro grupo de seguranço, adicioando o nome, selecionando a VPC já criada e adicionando as seguinte regras de entrada.
+
+
+
+<img width="1905" height="504" alt="image" src="https://github.com/user-attachments/assets/6ed92812-c6f3-4cf3-bfad-74940ea06197" />
+
+
+
+* Tipo: NFS
+
+* Protocolo: TCP
+
+* Intervalo de portas: 2049
+
+* Origem: Exclusivamente do Security Group das instâncias EC2 (seu grupo de segurança da EC2).
+
+* As regras de saída serão mantidas como padrão
+
+
+
+Essa configuração adicionada permiti que apenas as EC2 do projeto acessem os arquivos do EFS e impedem que qualquer outro recurso (interno ou externo) consiga montar ou ler o sistema de arquivos. Logo após adicionar essas configurações, cliquem em "Criar grupo de segurança.
 
 
 
