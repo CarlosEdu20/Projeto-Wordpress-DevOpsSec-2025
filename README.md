@@ -1,7 +1,7 @@
 # Projeto Wordpress DevOpsSec 2025 | Wordpress em alta disponibilidade na AWS 
 
 ## Objetivo:
-Com o crescimento contínuo do uso de aplicações web, garantir alta disponibilidade, escalabilidade e resiliência se tornou crucial em qualquer arquitetura moderna, ou seja, esses fatores somados asseguram que os serviços permaneçam acessíveis, suportem picos de demanda e se recuperem rapidamente de falhas sem comprometer a experiência do usuário. Por isso, este projeto visa implantar a plataforma Wordpress na nuvem AWS (Amazon Web Services) de forma escalável e tolerante a falhas, utilizando os principais serviços gerenciados da AWS para garantir o máximo de desempenho, disponibilidade e resiliência.
+Com o crescimento contínuo do uso de aplicações web, garantir alta disponibilidade, escalabilidade e resiliência se tornou crucial em qualquer arquitetura moderna, ou seja, esses fatores somados asseguram que os serviços permaneçam acessíveis, suportem altos picos de demanda e se recuperem rapidamente de falhas sem comprometer a experiência do usuário. Por isso, este projeto visa implantar a plataforma Wordpress na nuvem da AWS (Amazon Web Services) de forma escalável e tolerante a falhas, utilizando os principais serviços gerenciados da AWS para garantir o máximo de desempenho, disponibilidade e resiliência.
 
 
 ## Diagrama do sistema:
@@ -28,69 +28,93 @@ Com o crescimento contínuo do uso de aplicações web, garantir alta disponibil
 * **Contêineres e Aplicação:**
     * Docker
     * Docker Compose
-    * WordPress com PHP.i
+    * WordPress com PHP
     * phpMyAdmin
 
 ## Pré-requisitos:
-Antes de iniciar a replicação deste projeto, garanta que você tenha os seguintes pré-requisitos atendidos:
+Antes de iniciar a replicação deste projeto, garanta que você tenha todos os seguintes pré-requisitos atendidos:
 
 * **Conta na AWS:** Uma conta na Amazon Web Services com permissões administrativas ou suficientes para criar os recursos listados no projeto como (VPC, EC2, RDS, EFS, etc.).
 * **Git:** O [Git](https://git-scm.com/) instalado em sua máquina local ou na nuvem para clonar este repositório.
 * **Docker e Docker Compose:** Ter o [Docker Desktop](https://www.docker.com/products/docker-desktop/) ou o motor do Docker e o Docker Compose instalados localmente, caso deseje testar ou modificar o arquivo `docker-compose.yml`.
 
+Caso todos esses requisitos sejam atendidos, siga as seguintes etapas de execução do projeto.
+
 ## Etapa 1: Criação e personalização da VPC
-A base de toda a arquitetura dessa aplicação está na AWS VPC (Virtual Private Cloud). A VPC atua como um perímetro virtual, mantendo o sistema privado e totalmente isolado da internet pública. Essa separação é a primeira e mais importante camada de segurança para que os recursos que serão implantados em seu interior estejam completamente seguros. Para este projeto, foi considerado as seguintes configurações.
+A base de toda a arquitetura desta aplicação está na AWS VPC (Virtual Private Cloud). A VPC atua como um perímetro virtual, mantendo o sistema privado e totalmente isolado da internet pública. Essa separação é a primeira e mais importante camada de segurança para que os recursos que serão implantados em seu interior estejam completamente seguros. Para este projeto, foram considerado as seguintes configurações da VPC.
+
 - **Endereçamento IP da VPC:** Foi escolhido o seguinte bloco IP `10.0.0.0/16`, o mesmo fornece mais de 65.000 endereços de IPs. Isso nos dá um espaço extremamente amplo para escalar a aplicação no futuro, adicionando novos serviços sem o risco de esgotar os endereços.
-- **Múltiplas Zonas de Disponibilidade (AZs):** A VPC foi alocada em duas zonas de disponibilidade distintas, fazendo que a mesma possua uma alta disponibilidade em caso de falhas. Uma AZ é composta por um ou mais servidores discretos, se caso ocorrer uma falha na zona `us-east-2a`, por exemplo, a `us-east-2b` estaria operando normalmente, garantindo que a aplicação permaneça no ar e acessível aos usuários.
-- **Segmentação em 6 subnets:** Para garantir a segurança em camadas (princípio de "defesa em profundidade"), A VPC será divida em 6 sub-redes, sendo elas:
+
+- **Múltiplas Zonas de Disponibilidade (AZs):** A VPC foi alocada em duas zonas de disponibilidade distintas, o que garante alta disponibilidade em caso de falhas. Uma AZ é composta por um ou mais data centers discretos. Caso ocorra uma falha na zona us-east-2a, por exemplo, a us-east-2b continuará operando normalmente, garantindo que a aplicação permaneça no ar e acessível aos usuários.
+
+- **Segmentação em 6 subnets:** Para garantir a segurança em camadas (princípio de "defesa em profundidade"), a VPC será divida em 6 sub-redes, sendo elas:
+
   * **2 Subnets Públicas:** Uma em cada AZ. Elas servem como a "zona desmilitarizada" (DMZ), abrigando recursos que precisam de acesso direto à internet, como nosso Application Load Balancer.
+    
   * **2 Subnets Privadas para Aplicação (App):** Uma em cada AZ. Aqui residem nossas instâncias EC2 com o WordPress. As mesmas não são acessíveis diretamente pela internet, sendo protegidas pelo Application Load Balancer.
-  * **2 Subnets Privadas para Dados (Data):** Uma em cada AZ. Esta é a nossa camada mais segura. Nela, colocamos nosso banco de dados RDS e os pontos de acesso do EFS, garantindo que apenas as EC2 possam se comunicar com eles.
+  
+  * **2 Subnets Privadas para Dados (Data):** Uma em cada AZ. Esta é a camada mais segura, nela irá hospedar o banco de dados RDS e os pontos de acesso do EFS (EFS Mount Target), garantindo que apenas as EC2 possam se comunicar com eles.
+
 - **Conectividade e Roteamento:**
   * Um **Internet Gateway (IGW)** foi anexado à VPC para funcionar como a porta de entrada e saída para a internet.
+ 
   * Um **NAT Gateway** foi posicionado nas duas subnets públicas. A sua função é crucial, ele permite que as instâncias nas sub-redes privadas (como os servidores WordPress) acessem a internet para baixar atualizações ou pacotes, funcionando como um escudo de segurança para o tráfego de saída.
+
   * **Tabelas de Rotas** foram configuradas para controlar o fluxo de tráfego.
 
-## Etapa 1.2: Passo a passo para criação na AWS
-Para facilitar a criação de VPCs, a AWS possui uma maneira mais rápida para subir uma VPC na AWS, que é através do assistente "VPC e muito mais".Siga os seguintes passos a seguir:
-- Acesse o console da VPC e clique em **"Criar VPC"**.
+## Etapa 1.2: Passo a passo para criação da VPC na AWS
+Para facilitar a criação de VPCs, a AWS possui uma maneira mais rápida e eficiente para subir uma VPC na mesma, que é através do assistente "VPC e muito mais". Siga os passos a seguir:
+- Na barra de pesquisa do console, pesquise por VPC.
+<img width="919" height="187" alt="image" src="https://github.com/user-attachments/assets/cc3623cf-0fa5-423f-873b-071d9ea7ab8f" />
+
+- No painel da VPC, clique em "Suas VPCs" e, em seguida, em "Criar VPC".
 - Selecione a opção **"VPC e muito mais**.
 - Adicione as seguintes configurações:
 <img width="1912" height="783" alt="image" src="https://github.com/user-attachments/assets/0fab1690-43ce-407a-88f9-5da0e2aa3620" />
 
-* **Nome:** `adicione algum nome para sua VPC`
+* **Nome:** `defina um nome para sua VPC`
 * **Bloco CIDR IPv4:** `10.0.0.0/16`
 <img width="1912" height="653" alt="image" src="https://github.com/user-attachments/assets/961bdd97-3491-44ae-8717-f2de875c6088" />
 
 * **Número de zonas de disponibilidade (AZs):** `2`
+
 * **Número de sub-redes públicas:** `2` (O assistente irá nomeá-las e distribuir os IPs, exemplo: 10.0.1.0/24, 10.0.2.0/24)
-* **Número de sub-redes privadas:** `4` (Estas serão nossas sub-redes de Aplicação (App) onde irão ficar as duas EC2 da aplicação. Ex: 10.0.3.0/24, 10.0.4.0/24 e também serão usadas para o Data onde ficará o RDS). Após a criação das subnets privadas, o assistente pode acabar deixando o nome delas bem genérico, para seguir a organização da aplicação, é uma boa escolha deixar os nomes `Private subnet(App)1`, `Private subnet(App)2`, `Private subnet(Data)1` e `Private subnet (Data)2`.
+
+* **Número de sub-redes privadas:** `4` (Estas serão nossas sub-redes de Aplicação (App) onde irão ficar as duas EC2 da aplicação. Ex: 10.0.3.0/24, 10.0.4.0/24 e também serão usadas para o Data onde ficará o RDS). Após a criação das subnets privadas, o assistente pode acabar deixando o nome delas bem genérico, para seguir a organização da aplicação, é uma boa escolha deixar os nomes `Private subnet(App)1`, `Private subnet(App)2`, `Private subnet(Data)1` e `Private subnet (Data)2` como mostra no diagrama do projeto.
+
+* O **internet Gateway** será gerado automaticamente pelo assistente, logo não é preciso adiciona-lo manualmente.
+
 * **Gateways NAT:** Selecione "Nenhum" (posteriomente iremos adiciona-los manualmente na aplicação).
+
 * **Endpoints da VPC:** Mantenha como "Nenhum".
+
 * Agora clique em **Criar VPC.**
 
 ## Etapa 2: Criação do banco de dados Amazon RDS (Relational Database System)
-Para que dados como posts, usuários e configuração possam persistir na aplicação, precisamos de um banco de dados para que essa possibilidade seja possível, com isso, vamos usar o **Amazon RDS.** O RDS é um serviço de banco de dados relacional gerenciado, o que significa que a AWS automatiza tarefas complexas e repetitivas, como provisionamento de hardware, instalação um sistema operacional, aplicação de patches de segurança e backups. Isso nos permite focar no desenvolvimento da aplicação em si, ao invés de gerenciar o banco de dados.
+Para que dados como posts, usuários e configuração possam persistir na aplicação, precisamos de um banco de dados para que essa possibilidade seja possível, com isso, vamos usar o **Amazon RDS (Relational Database System).** O RDS é um serviço de banco de dados relacional gerenciado, o que significa que a AWS automatiza tarefas complexas e repetitivas, como provisionamento de hardware, instalação de um sistema operacional, aplicação de patches de segurança e backups. Isso nos permite focar no desenvolvimento da aplicação em si, ao invés de gerenciar o banco de dados.
 
 As configurações escolhidas para o RDS foram:
 * **Mecanismo (Engine):** Foi escolhido o MySQL Community, versão 8.0.42, ele é um dos sistemas de gerenciamento de banco de dados de código aberto mais populares do mundo e totalmente compatível com os requisitos do WordPress.
+  
 * **Tipo de Instância:** Para esse projeto bem simples e didático e para reduzir os custos, foi selecionada a instância `db.t3.micro`. Ela faz parte da família de instâncias "burstable", oferecendo um desempenho de linha de base com a capacidade de "burst" (picos de performance) para lidar com cargas de trabalho variáveis, ideal para um site com tráfego de baixo a moderado.
+  
 * **Posicionamento na Rede:** O banco de dados foi estrategicamente posicionado na camada mais segura da rede: as sub-redes privadas de dados. Essa configuração garante que ele não tenha nenhuma exposição à internet e só possa ser acessado pela nossa camada de aplicação (as instâncias EC2), conforme definido pelas regras do Security Group do RDS.
+  
 * **Disponibilidade (Multi-AZ):** Visando o controle de custos para este ambiente de aprendizado, a funcionalidade de Multi-AZ foi desativada. Em um ambiente de produção real, ativar o Multi-AZ é uma melhor prática crucial, pois cria uma réplica de standby do banco de dados em outra Zona de Disponibilidade, garantindo a recuperação automática e rápida em caso de falha da instância primária.
 
 ## Etapa 2.1: Security Groups
 Os Security Groups (SGs) atuam como firewalls virtuais para nossos recursos na nuvem. Eles são o principal mecanismo de controle de tráfego, funcionando como porteiros que decidem exatamente quem pode entrar e em qual porta. Para este projeto, criei uma "cadeia de confiança" entre os SGs, garantindo o princípio do menor privilégio, onde cada camada só confia na camada imediatamente anterior a ela.
 
-## Etapa 2.2: Criação do Security Group EC2
+## Etapa 2.2: Criação do Security group Application Load Balancer
+Este primeiro Security Group irá atuar como uma **porta de entrada principal** da aplicação, controlando todo o tráfego que chega da internet ao **Application Load Balancer (ALB)**. Ele define as regras que determinam quais conexões externas podem acessar a camada de balanceamento, garantindo segurança e filtragem antes que os dados da internet sejam encaminhado para as instâncias EC2.
 
-Antes de criamos a regra do security group do RDS, precisamos primeiro criar o da EC2. O mesmo possui o propósito de proteger as instâncias EC2 que rodam o contâiner do docker. A seguinte configuração será adicionado nessa regra.
+- Na barra de pesquisa do console, digite por **"EC2"**. 
 
-- Na aba da EC2 vá em **"Security Groups"**
+- No painel da EC2 vá em **"Rede e segurança"** depois em **"Security groups"**.
 
 - Depois clique em **"Criar Grupo de Segurança"**
 
-<img width="1905" height="631" alt="image" src="https://github.com/user-attachments/assets/c4c5d6dd-236b-4f0a-9310-74c8a865a188" />
-
+<img width="1883" height="583" alt="image" src="https://github.com/user-attachments/assets/def89828-e8b7-40d6-bc3a-d967123f8a06" />
 
 
 - Insira o nome do grupo de segurança.
@@ -99,11 +123,31 @@ Antes de criamos a regra do security group do RDS, precisamos primeiro criar o d
 
 - Selecione a VPC que você criou.
 
-- Agora vamos adicionar uma regra de entrada que contará com as seguintes configurações:
+<img width="1893" height="603" alt="image" src="https://github.com/user-attachments/assets/af4fdc39-83d0-42fa-a02d-bf25310ab176" />
 
-  * Tráfego Web (porta 80 – HTTP):
+- Regras de entrada:
+  * **Tipo:** HTTP
+  * **Protocolo:** TCP
+  * **Intervalos de portas:** 80
+  * **Origem:** Qualquer lugar-IPv4 (0.0.0.0/0).
 
-  * Origem: Exclusivamente do Security Group do Application Load Balancer (alb-security-group, a ser criado).
+- Regras de saída:
+Você pode manter a regra padrão (Todo o tráfego para 0.0.0.0/0). O Load Balancer precisa dessa regra para encaminhar o tráfego para as instâncias EC2.
+
+- Clique em **"Criar grupo de segurança"**. 
+
+## Etapa 2.3: Criação do Security Group EC2
+
+Antes de criamos a regra do security group do RDS, precisamos primeiro criar o da EC2. O mesmo possui o propósito de proteger as instâncias EC2 que rodam o contâiner do docker. A seguinte configuração será adicionado nessa regra.
+
+
+
+
+Agora vamos adicionar uma regra de entrada que contará com as seguintes configurações:
+
+  - Tráfego Web (porta 80 – HTTP):
+
+  - Origem: Exclusivamente do Security Group do Application Load Balancer (alb-security-group, a ser criado).
 
 
 
@@ -111,7 +155,7 @@ Essa regra assegura que todo acesso ao WordPress passe primeiro pelo Load Balanc
 
 
 
-## Etapa 2.3: Criação do Security Group RDS
+## Etapa 2.4: Criação do Security Group RDS
 
 O Security Group RDS foi configurado para proteger o banco de dados relacional utilizado pelo WordPress. Seu objetivo é restringir ao máximo o acesso, permitindo conexões apenas das instâncias EC2 autorizadas.
 
@@ -137,7 +181,7 @@ Essa configuração permite que somente as EC2 que executam o WordPress possam s
 
 
 
-## Etapa 2.4: Criação do Security Group para o EFS
+## Etapa 2.5: Criação do Security Group para o EFS
 
 O Security Group EFS foi criado para proteger o sistema de arquivos compartilhado utilizado pelas instâncias EC2 para armazenar conteúdos persistentes do WordPress. Sua função é garantir que apenas instâncias autorizadas possam montar e acessar os arquivos do EFS.
 
