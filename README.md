@@ -251,21 +251,15 @@ As seguintes configurações serão usadas no EFS:
 Após a criação do seu EFS, anote o ID do Sistema de arquivos (ex: fs-0123...) ou o endereço de IP de um dos Mount Targets. Essa informação será útil para o script user-data que irá montar o EFS automaticamente nas instâncias EC2.
 
 ## Etapa 4:  Automação com Launch Template e User Data
-Para que a arquitetura desse projeto seja completamente escalável e resiliente, precisamos de uma forma de lançar novas instâncias EC2 de forma totalmente automática, sem intervenção manual. O Auto Scaling Group precisa de uma "receita" para saber exatamente como configurar um novo servidor. Essa receita é composta por duas peças principais: o Launch Template e o script User Data.
+Para que a arquitetura desse projeto seja completamente escalável e resiliente, precisamos de uma forma de lançar novas instâncias EC2 de forma totalmente automatizda, sem precisar ir manualmente no console. Para que as instâncias da EC2 sejam lançadas automaticamente, o Auto Scaling Group precisa de uma "receita de bolo" para saber exatamente como configurar um novo servidor. Essa receita é composta por duas peças chaves: o Launch Template e o script User Data.
 
 ### Etapa 4.1: O Launch Template (O Molde)
-O Launch Template funciona como o **"molde" ou a "planta baixa"** para nossas instâncias EC2. Ele é um recurso da AWS onde salvamos todas as configurações base de uma instância, garantindo que cada novo servidor criado pelo Auto Scaling seja idêntico e consistente.
+O Launch Template funciona como o **"molde"** para nossas instâncias EC2, demonstrando passo a passo de como serão criadas. Ele é um recurso da AWS onde salvamos todas as configurações base de uma instância, garantindo que cada novo servidor criado pelo Auto Scaling seja idêntico e consistente. Logo abaixo estão as informações de como criar o mesmo.
 
-As configurações salvas em nosso template (`wordpress-launch-template`) incluem:
-* **AMI (Amazon Machine Image):** A imagem do sistema operacional base (Ubuntu 24.04 LTS).
-* **Tipo de Instância:** O poder computacional da máquina (`t2.micro`).
-* **Par de Chaves:** Para permitir o acesso SSH seguro.
-* **Configurações de Rede:** A VPC e as sub-redes onde a instância deve ser criada.
-* **Security Group:** O `ec2-sg` para aplicar nosso firewall da camada de aplicação.
-* **Script User Data:** O conjunto de comandos a serem executados na primeira inicialização.
+- No painel da EC2, clique em "Modelos de execução".
 
 ### Etapa 4.2: O Script User Data (O automatizador da configuração)
-Se o Launch Template é o molde, o script `user-data` é o **"robô construtor"** que entra em ação na primeira vez que a instância é ligada. Ele executa uma sequência de passos para transformar uma instância Ubuntu "limpa" em um servidor WordPress totalmente funcional e conteinerizado.
+Se o Launch Template é o molde, o script `user-data` é o **"robô construtor"** que entra em ação na primeira vez que a instância é ligada. Ele executa uma sequência de passos para transformar uma instância Ubuntu "limpa" em um servidor WordPress totalmente funcional e conteinerizado. O Script do user-data está disponível nesse repositório, sinta-se a vontade para modifica como quiser.
 
 O script criado realiza as seguintes tarefas:
 
@@ -275,6 +269,8 @@ O script criado realiza as seguintes tarefas:
 4.  **Cria o `docker-compose.yml`:** Gera dinamicamente o arquivo de orquestração dos contêineres, inserindo as credenciais do banco de dados RDS.
 5.  **Inicia os Serviços:** Executa o `docker compose up -d` para baixar as imagens e iniciar os contêineres do WordPress e do phpMyAdmin.
 
+
+Com o user data e o Lauch template criados, 
 
 
 
