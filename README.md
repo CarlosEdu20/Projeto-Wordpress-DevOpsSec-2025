@@ -253,13 +253,33 @@ Após a criação do seu EFS, anote o ID do Sistema de arquivos (ex: fs-0123...)
 ## Etapa 4:  Automação com Launch Template e User Data
 Para que a arquitetura desse projeto seja completamente escalável e resiliente, precisamos de uma forma de lançar novas instâncias EC2 de forma totalmente automatizda, sem precisar ir manualmente no console. Para que as instâncias da EC2 sejam lançadas automaticamente, o Auto Scaling Group precisa de uma "receita de bolo" para saber exatamente como configurar um novo servidor. Essa receita é composta por duas peças chaves: o Launch Template e o script User Data.
 
-### Etapa 4.1: O Launch Template (O Molde)
+### Etapa 4.1: O Launch Template
 O Launch Template funciona como o **"molde"** para nossas instâncias EC2, demonstrando passo a passo de como serão criadas. Ele é um recurso da AWS onde salvamos todas as configurações base de uma instância, garantindo que cada novo servidor criado pelo Auto Scaling seja idêntico e consistente. Logo abaixo estão as informações de como criar o mesmo.
 
 - No painel da EC2, clique em "Modelos de execução".
+- Depois clique em **"Criar modelo de execução**.
 
-### Etapa 4.2: O Script User Data (O automatizador da configuração)
-Se o Launch Template é o molde, o script `user-data` é o **"robô construtor"** que entra em ação na primeira vez que a instância é ligada. Ele executa uma sequência de passos para transformar uma instância Ubuntu "limpa" em um servidor WordPress totalmente funcional e conteinerizado. O Script do user-data está disponível nesse repositório, sinta-se a vontade para modifica como quiser.
+<img width="1258" height="610" alt="image" src="https://github.com/user-attachments/assets/77b6f442-a585-41b9-93b1-75c6f5d8f288" />
+
+- Coloque um nome para o seu modelo de execução.
+- Coloque também uma descrição sobre o que ele faz.
+
+<img width="1269" height="815" alt="image" src="https://github.com/user-attachments/assets/9c3f54cc-1bbd-432c-8906-f37021fec855" />
+
+- Selecione a AMI do Ubuntu.
+- Tipo de instância: t2.micro
+
+<img width="1265" height="652" alt="image" src="https://github.com/user-attachments/assets/2bd848dd-d292-4837-bdfc-775ef711db43" />
+
+- Par de chaves: Selecione um par de chaves existente ou crie um novo. Ele será **necessário para permitir seu acesso administrativo** à instância via SSH para qualquer depuração.
+- Configuração de rede:  Deixe o campo 'Sub-rede' vazio, mas em 'Grupos de segurança', **selecione o grupo de segurança da EC2** que criamos anteriormente.
+- Agora vá em **"detalhes avançados"** e vá até o final da seção.
+
+
+
+
+### Etapa 4.2: O Script User Data 
+Se o Launch Template é o molde, o script `user-data` é o **"robô construtor"** que entra em ação na primeira vez que a instância é ligada. Ele executa uma sequência de passos para transformar uma instância Ubuntu "limpa" em um servidor WordPress totalmente funcional e conteinerizado. O Script do user-data está disponível neste repositório, antes de fazer o upload, lembre-se de **editar as variáveis** no início do script com suas informações (credenciais do RDS, ID do EFS, etc.). O possui placeholders de onde colocar suas credenciais.
 
 O script criado realiza as seguintes tarefas:
 
@@ -269,8 +289,14 @@ O script criado realiza as seguintes tarefas:
 4.  **Cria o `docker-compose.yml`:** Gera dinamicamente o arquivo de orquestração dos contêineres, inserindo as credenciais do banco de dados RDS.
 5.  **Inicia os Serviços:** Executa o `docker compose up -d` para baixar as imagens e iniciar os contêineres do WordPress e do phpMyAdmin.
 
+<img width="1207" height="480" alt="image" src="https://github.com/user-attachments/assets/af21664a-6102-4865-980e-d201dab654f7" />
 
-Com o user data e o Lauch template criados, 
+- Em dados do usuário, clique em **"Escolher arquivo"** e suba o script.
+- E clique em **"Criar modelos de execução"**.
+
+Ao final desses passosm, o template será mostrado no painel.
+<img width="1661" height="391" alt="image" src="https://github.com/user-attachments/assets/482d3462-4014-44e1-880a-c28bbd8e840b" />
+
 
 
 
