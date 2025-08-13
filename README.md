@@ -306,7 +306,7 @@ O Application Load Balancer (ALB) atua como uma **"porta de entrada "** da nossa
 
 - **Distribuição de Tráfego:** O ALB recebe todas as solicitações dos usuários e as distribui de forma equilibrada entre as instâncias EC2 saudáveis (funcionando) que estão rodando em diferentes Zonas de Disponibilidade. Isso evita que uma única instância fique sobrecarregada e melhora o desempenho geral do site.
 
-2.  **Configuração de Health Check:** O ALB, através de seu **Grupo de Destino (Target Group)**, realiza verificações de saúde constantes em cada instância. Ele foi configurado para acessar a página inicial (`/`) de cada servidor via HTTP. Se uma instância falhar em responder ou retornar um erro, o ALB a marca como "não saudável" e para de enviar tráfego para ela imediatamente, redirecionando os usuários para as instâncias que estão operando normalmente. Isso garante a resiliência e a confiabilidade da aplicação.
+- **Configuração de Health Check:** O ALB, através de seu **Grupo de Destino (Target Group)**, realiza verificações de saúde constantes em cada instância. Ele foi configurado para acessar a página inicial (`/`) de cada servidor via HTTP. Se uma instância falhar em responder ou retornar um erro, o ALB a marca como "não saudável" e para de enviar tráfego para ela imediatamente, redirecionando os usuários para as instâncias que estão operando normalmente. Isso garante a resiliência e a confiabilidade da aplicação.
 
 Adicionalmente, o ALB é um serviço altamente disponível, posicionado nas **duas sub-redes públicas** para garantir que o site permaneça acessível mesmo com a falha de uma Zona de Disponibilidade inteira.
 
@@ -339,7 +339,7 @@ Observação: É importante que você tenha criado sua VPC em Zonas de disponibi
 
 - Protocolo: HTTP
 - Porta: 80
-- Agora clique em **"criar grupo de segurança"**
+- Na ação padrão, clique em **"Criar grupo de destino"** (Create target group)
 - Abrirá uma nova aba com as seguintes informações:
 
 <img width="1906" height="834" alt="image" src="https://github.com/user-attachments/assets/890fadd6-2b6e-4b16-b565-cb37dd2cad5c" />
@@ -360,7 +360,27 @@ Verifique se as informações batem com a imagem.
 - **Intervalo:** 30 segundos
 - **Códigos de sucesso:** 200
 
-Essa configuração de verificação de saúde do Application Load Balancer foi projetada para criar um sistema resiliente e com capacidade de autocorreção. A cada 30 segundos, o balanceador testa a página inicial de cada instância na porta 80, esperando uma resposta de sucesso (código 200 OK) em menos de 5 segundos.
+Essa configuração de verificação de saúde do Application Load Balancer foi projetada para criar um sistema resiliente e com capacidade de autocorreção. A cada 30 segundos, o balanceador testa a página inicial de cada instância na porta 80, esperando uma resposta de sucesso (código 200 OK) em menos de 5 segundos. Na tela seguinte, de "Registrar destinos", não selecione nenhuma instância. Deixe a lista vazia e apenas clique em "Criar grupo de destino". O Auto Scaling Group cuidará do registro automaticamente.
+
+Após a aplicação destas configurações, clique no botão do círculo para atualizar os grupos de destinos e selecione seu grupo já criado.
+
+<img width="1909" height="505" alt="image" src="https://github.com/user-attachments/assets/f1c4b7d2-a32d-4df2-8b97-f50a2b33cdea" />
+
+Verifique no seu resumo se está tudo certo e clique em **criar load balancer**.
+
+
+## Etapa 6: Escalabilidade e Resiliência com Auto Scaling Group (ASG)
+O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da nossa aplicação. Sua função é gerenciar o ciclo de vida das nossas instâncias EC2 para garantir que a aplicação tenha sempre a capacidade ideal para atender à demanda dos usuários e se manter resiliente a falhas, cumprindo todos os requisitos do projeto. O mesmo usa-se dos seguintes requisitos.
+
+- **Uso do Launch Template:** O ASG utiliza-se do Launch Template como a "planta" para criar cada nova instância, garantindo que todos os servidores sejam idênticos e configurados corretamente a partir do user data.
+
+- **Posicionamento em Sub-redes Privadas:** Todas as instâncias são criadas dentro das **sub-redes privadas de aplicação**. Isso garante que elas permaneçam seguras e não sejam expostas diretamente à internet.
+
+- **Associação com o ALB:** Toda nova instância criada pelo ASG é automaticamente registrada no Target Group do Application Load Balancer. Ela só começará a receber tráfego do site após passar nas verificações de saúde, garantindo que apenas instâncias 100% funcionais atendam aos usuários.
+
+- **Escalabilidade baseada em CPU:** Foi configurada uma política de escalabilidade dinâmica. Se o uso médio de CPU de todas as instâncias ultrapassar 70%, o ASG automaticamente lançará novas instâncias para lidar com o aumento da carga. Da mesma forma, ele pode remover instâncias se a carga diminuir, otimizando os custos.
+
+
 
 
 
