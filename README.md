@@ -395,7 +395,13 @@ Antes de começamos o passo a passo da criação do ASG, seu launch template e s
 
 - **Nome do grupo do Auto Scaling**: Digite o nome do seu grupo.
 - **Modelo de execução:** Selecione seu modelo de execução.
+- Clique em **"próximo"**.
 
+  <img width="1909" height="850" alt="image" src="https://github.com/user-attachments/assets/93873a8a-ab7b-4faa-b0f7-0a6382df15ce" />
+
+- **VPC:** Selecione sua VPC criada.
+- **Zonas de disponibilidade e sub-redes**: Selecione as subnets 1 e 2. É nelas que irão ficar as EC2 do projeto.
+- **Distribuição da zona de disponibilidade**: Melhor esforço equilibrado
 
 
 
