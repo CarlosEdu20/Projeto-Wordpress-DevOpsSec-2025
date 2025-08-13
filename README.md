@@ -103,7 +103,63 @@ As instâncias EC2 nas sub-redes privadas (App e Data) estão seguras, pois não
 **Crie os IPs Públicos (Elastic IPs):**
 - O NAT Gateway precisa de um endereço de IP público fixo.
 - No console da VPC, no menu à esquerda, clique em **"IPs Elásticos"**.
+- Clique em **"Alocar endereço IP elástico"** e depois em **"Alocar"**.
 
+<img width="1892" height="804" alt="image" src="https://github.com/user-attachments/assets/c7daba9a-ed02-492c-a305-22eb3a5066fb" />
+
+- Repita mais uma vez o processo para ter um total de dois IPs Elásticos (um para cada NAT Gateway).
+
+**Crie os NAT Gateways:**
+Para esse projeto precisa-se de dois NAT gateway porque serão 2 instâncias.
+- Agora, no menu à esquerda, clique em **"Gateways NAT"** e em **"Criar gateway NAT"**.
+
+<img width="1892" height="693" alt="image" src="https://github.com/user-attachments/assets/5b65571f-8429-4099-b850-e06add6ba208" />
+- Digite um nome para seu NAT Gateway
+- Sub-rede: Selecione a sua primeira sub-rede pública (exemplo: public-subnet-a).
+- **Tipo de conectividade:** Público.
+- **ID de alocação do IP elástico:** Selecione o primeiro IP Elástico que você criou.
+- Repita o processo para criar o nat-gateway-b, mas desta vez, associe-o à segunda sub-rede publica (public-subnet-b) e ao segundo IP Elástico.
+
+## Etapa 1.5: Configure as Tabelas de Rotas Privadas 
+As Tabelas de Rotas (Route Tables) são um conjunto de regras que atuam como o "GPS" da VPC, determinando para onde o tráfego de rede originado das sub-redes é direcionado. Para essa arquitetura, criei um esquema de roteamento resiliente e seguro com três tabelas principais:
+
+- wordpress-rtb-public: aqui é onde vão estar associadas as sub-redes públicas:
+<img width="1585" height="498" alt="image" src="https://github.com/user-attachments/assets/674f8a3a-8930-4904-b65c-c49afd687a18" />
+
+- wordpress-rtb-private1-us-east-2a: aqui é onde vão ficar uma das duas subnets privadas
+  * Selecione uma tabela de rotas que estejam na zona A.
+  * Vá em **"Rotas"** e clique em **editar rotas**.
+  
+  <img width="1917" height="437" alt="image" src="https://github.com/user-attachments/assets/fbf602dd-9656-4765-81a0-c45c4c934f6f" />
+
+* Clique em **"adicionar rotas"**.
+* **Destino:** `0.0.0.0/0`
+* **Alvo: Gateway NAT**
+* Selecione seu NAT Gateway A
+* Clique em **Salvar configurações**
+
+<img width="1630" height="493" alt="image" src="https://github.com/user-attachments/assets/ea7276d4-7509-4f41-a46f-5b7c468f4e04" />
+- Vá em **"Associações de sub-rede"**.
+- Clique em **"Editar associações de sub-rede**
+
+<img width="1895" height="674" alt="image" src="https://github.com/user-attachments/assets/5dc1bcec-fbec-4644-9e6a-9bb90c841330" />
+- Selecione a subnet-private(app1) e subnet-private(app2).
+- Clique **"Salvar associações"**.
+
+wordpress-rtb-private2-us-east-2b: aqui é onde irão as outras duas subnets privadas.
+* Clique novamente em **"adicionar rotas"**.
+* **Destino:** `0.0.0.0/0`
+* **Alvo: Gateway NAT**
+* Selecione seu NAT Gateway B
+* Clique em **Salvar configurações**
+* Vá em **"Associações de sub-rede"**.
+* Clique em **"Editar associações de sub-rede**
+* Selecione a subnet-private(app1) e subnet-private(app2).
+* Clique **"Salvar associações"**.
+
+<img width="1640" height="530" alt="image" src="https://github.com/user-attachments/assets/5eed27a5-4a1a-464a-b20b-f036ea881e42" />
+
+  
 
 
 
