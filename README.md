@@ -378,7 +378,7 @@ O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da nossa
 
 - **Associação com o ALB:** Toda nova instância criada pelo ASG é automaticamente registrada no Target Group do Application Load Balancer. Ela só começará a receber tráfego do site após passar nas verificações de saúde, garantindo que apenas instâncias 100% funcionais atendam aos usuários.
 
-- **Escalabilidade baseada em CPU:** Foi configurada uma política de escalabilidade dinâmica. Se o uso médio de CPU de todas as instâncias ultrapassar 70%, o ASG automaticamente lançará novas instâncias para lidar com o aumento da carga. Da mesma forma, ele pode remover instâncias se a carga diminuir, otimizando os custos.
+- **Escalabilidade baseada em CPU:** Foi configurada uma política de escalabilidade dinâmica. Se o uso médio de CPU de todas as instâncias ultrapassar 70%, o ASG automaticamente lançará automaticamente novas instâncias para lidar com o aumento da carga. Da mesma forma, ele pode remover instâncias se a carga diminuir, otimizando os custos.
 
 
 
