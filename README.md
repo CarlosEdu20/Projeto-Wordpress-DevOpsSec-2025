@@ -381,6 +381,20 @@ O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da nossa
 - **Escalabilidade baseada em CPU:** Foi configurada uma política de escalabilidade dinâmica. Se o uso médio de CPU de todas as instâncias ultrapassar 70%, o ASG automaticamente lançará automaticamente novas instâncias para lidar com o aumento da carga. Da mesma forma, ele pode remover instâncias se a carga diminuir, otimizando os custos.
 
 
+# Etapa 6.1: Criação do Auto Scaling Group
+Antes de começamos o passo a passo da criação do ASG, seu launch template e seu Target Group já devem está devidamente criados.
+
+- No console da EC2, no menu à esquerda, role até o final e clique em **"Grupos do Auto Scaling".**
+
+<img width="1901" height="839" alt="image" src="https://github.com/user-attachments/assets/df405261-0dd0-4d3d-b76a-fbcbfc3b91cf" />
+
+- Clique em **"Criar grupo do Auto Scaling"**.
+- Após clicar em criar, você será direcionado a essa tela.
+
+<img width="1899" height="848" alt="image" src="https://github.com/user-attachments/assets/c2ec8903-e2f7-4067-bee7-96ea50997900" />
+
+- **Nome do grupo do Auto Scaling**: Digite o nome do seu grupo.
+- **Modelo de execução:** Selecione seu modelo de execução.
 
 
 
