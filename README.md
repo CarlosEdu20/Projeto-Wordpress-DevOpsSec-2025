@@ -400,8 +400,51 @@ Antes de começamos o passo a passo da criação do ASG, seu launch template e s
   <img width="1909" height="850" alt="image" src="https://github.com/user-attachments/assets/93873a8a-ab7b-4faa-b0f7-0a6382df15ce" />
 
 - **VPC:** Selecione sua VPC criada.
-- **Zonas de disponibilidade e sub-redes**: Selecione as subnets 1 e 2. É nelas que irão ficar as EC2 do projeto.
-- **Distribuição da zona de disponibilidade**: Melhor esforço equilibrado
+- **Zonas de disponibilidade e sub-redes:** Na lista, selecione as **duas sub-redes privadas da aplicação** (ex: app-subnet-aeapp-subnet-b). É crucial escolher as sub-redes privadas corretas para proteger as instâncias.
+- **Distribuição da zona de disponibilidade**: Melhor esforço equilibrado.
+- Clique em **"próximo"**.
+
+<img width="1910" height="706" alt="image" src="https://github.com/user-attachments/assets/faad4486-d8dd-420b-ad00-37cee1d91e19" />
+
+- **Balanceamento de carga:** Anexar a um balanceador de carga existente.
+- **Grupos de destino de balanceador de carga existentes:** Selecione seu load balancer criado.
+- Clique em **"próximo"**.
+
+<img width="1889" height="515" alt="image" src="https://github.com/user-attachments/assets/9c17e8ce-553e-415e-85d8-29489da34825" />
+
+Nessa parte deixe tudo por padrão. 
+
+<img width="1726" height="654" alt="image" src="https://github.com/user-attachments/assets/f8891775-7197-465b-92d7-ef814d6840cf" />
+ 
+- **Tipos de verificações de integridade adicionais:** Ative as verificações de integridade do Elastic Load Balancing.
+Com essa opção ativada, o Auto Scaling Group passa a considerar o status de saúde reportado pelo Application Load Balancer para determinar se uma instância está funcional
+- Clique em **"próximo"**.
+
+<img width="1884" height="715" alt="image" src="https://github.com/user-attachments/assets/a8e288b7-29ef-4386-a98a-7cb8232afb4e" />
+
+- **Capacidade desejada: 2**
+- **Capacidade mínima desejada: 2**
+Este valor foi escolhido para garantir **Alta Disponibilidade (High Availability)** desde o primeiro momento. Como nossa arquitetura está distribuída em duas Zonas de Disponibilidade (AZs), manter um mínimo de duas instâncias garante que, se uma instância (ou uma AZ inteira) falhar, a outra instância na outra AZ continuará servindo o tráfego, evitando que o site saia do ar. O Auto Scaling Group então trabalhará para substituir a instância que falhou, retornando ao estado saudável de duas instâncias.
+
+- **Capacidade máxima desejada: 4**
+O valor máximo de quatro instâncias define o limite de **Escalabilidade** da nossa aplicação e também atua como uma medida de **Controle de Custos**. Se houver um pico de acessos e a utilização da CPU ultrapassar nosso alvo de 70%, o Auto Scaling Group tem permissão para adicionar até mais duas instâncias para lidar com a carga. Ao mesmo tempo, este limite impede que o grupo crie um número ilimitado de instâncias em caso de um pico de tráfego anormal ou um ataque, o que poderia levar a uma fatura inesperada na AWS.
+
+<img width="1520" height="610" alt="image" src="https://github.com/user-attachments/assets/e21e6c64-16ea-4916-8e0f-4b2ad1d21fa5" />
+
+Para automatizar a escalabilidade, foi configurada uma **"Política de dimensionamento com monitoramento do objetivo" (Target Tracking Policy)**. Esta é uma política inteligente que funciona como um termostato para a nossa aplicação, ajustando automaticamente o número de instâncias para manter o desempenho ideal.
+
+As configurações específicas foram:
+
+- **Tipo de Métrica:** Média de utilização da CPU O Auto Scaling Group irá monitorar constantemente a carga de processamento média de todas as instâncias em execução.
+- **Valor de Destino:** 70%. Este é o nosso "ponto de equilíbrio". Se o tráfego no site aumentar e a média de uso da CPU de todas as instâncias ultrapassar 70%, o Auto Scaling Group automaticamente adicionará novas instâncias para distribuir a carga. Da mesma forma, se o tráfego diminuir e a CPU ficar ociosa, ele removerá instâncias para otimizar os custos (sempre respeitando a capacidade mínima de 2).
+- **Aquecimento da Instância:** 300 segundos. Esta configuração instrui o Auto Scaling a esperar 5 minutos antes de incluir uma instância recém-lançada nas métricas de CPU. Isso dá tempo para a instância iniciar, executar o script `user-data` e estabilizar, evitando que picos de uso durante a inicialização causem decisões de escalabilidade prematuras.
+
+Essa combinação de regras garante que a aplicação responda dinamicamente à demanda real dos usuários, crescendo para suportar picos de tráfego e encolhendo para economizar recursos, tudo de forma 100% automática.
+
+
+
+
+
 
 
 
