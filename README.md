@@ -38,22 +38,22 @@ Antes de iniciar a replicação deste projeto, garanta que você tenha todos os 
 * **Git:** O [Git](https://git-scm.com/) instalado em sua máquina local ou na nuvem para clonar este repositório.
 * **Docker e Docker Compose:** Ter o [Docker Desktop](https://www.docker.com/products/docker-desktop/) ou o motor do Docker e o Docker Compose instalados localmente, caso deseje testar ou modificar o arquivo `docker-compose.yml`.
 
-Caso todos esses requisitos sejam atendidos, siga as seguintes etapas de execução do projeto.
+Caso todos esses requisitos estejam atendidos, siga as seguintes etapas de execução do projeto.
 
 ## Etapa 1: Criação e personalização da VPC
-A base de toda a arquitetura desta aplicação está na AWS VPC (Virtual Private Cloud). A VPC atua como um perímetro virtual, mantendo o sistema privado e totalmente isolado da internet pública. Essa separação é a primeira e mais importante camada de segurança para que os recursos que serão implantados em seu interior estejam completamente seguros. Para este projeto, foram considerado as seguintes configurações da VPC.
+A base de toda a arquitetura desta aplicação está na AWS VPC (Virtual Private Cloud). A VPC atua como um perímetro virtual, mantendo o sistema privado e totalmente isolado da internet pública. Essa separação é a primeira e mais importante camada de segurança para que os recursos que serão implantados em seu interior estejam completamente seguros e isolados. Para este projeto, foram considerado as seguintes configurações da VPC.
 
 - **Endereçamento IP da VPC:** Foi escolhido o seguinte bloco IP `10.0.0.0/16`, o mesmo fornece mais de 65.000 endereços de IPs. Isso nos dá um espaço extremamente amplo para escalar a aplicação no futuro, adicionando novos serviços sem o risco de esgotar os endereços.
 
-- **Múltiplas Zonas de Disponibilidade (AZs):** A VPC foi alocada em duas zonas de disponibilidade distintas, o que garante alta disponibilidade em caso de falhas. Uma AZ é composta por um ou mais data centers discretos. Caso ocorra uma falha na zona us-east-2a, por exemplo, a us-east-2b continuará operando normalmente, garantindo que a aplicação permaneça no ar e acessível aos usuários.
+- **Múltiplas Zonas de Disponibilidade (AZs):** A VPC foi alocada em duas zonas de disponibilidade distintas, o que garante alta disponibilidade em caso de falhas. Uma AZs é composta por um ou mais data centers discretos. Caso ocorra uma falha na zona us-east-2a, por exemplo, a us-east-2b continuará operando normalmente, garantindo que a aplicação permaneça no ar e acessível aos usuários.
 
 - **Segmentação em 6 subnets:** Para garantir a segurança em camadas (princípio de "defesa em profundidade"), a VPC será divida em 6 sub-redes, sendo elas:
 
-  * **2 Subnets Públicas:** Uma em cada AZ. Elas servem como a "zona desmilitarizada" (DMZ), abrigando recursos que precisam de acesso direto à internet, como nosso Application Load Balancer.
+  * **2 Subnets Públicas:** Uma em cada AZs. Elas servem como a "zona desmilitarizada" (DMZ), abrigando recursos que precisam de acesso direto à internet, como nosso Application Load Balancer.
     
-  * **2 Subnets Privadas para Aplicação (App):** Uma em cada AZ. Aqui residem nossas instâncias EC2 com o WordPress. As mesmas não são acessíveis diretamente pela internet, sendo protegidas pelo Application Load Balancer.
+  * **2 Subnets Privadas para Aplicação (App):** Uma em cada AZs. Aqui residem nossas instâncias EC2 com o WordPress. As mesmas não são acessíveis diretamente pela internet, sendo protegidas pelo Application Load Balancer.
   
-  * **2 Subnets Privadas para Dados (Data):** Uma em cada AZ. Esta é a camada mais segura, nela irá hospedar o banco de dados RDS e os pontos de acesso do EFS (EFS Mount Target), garantindo que apenas as EC2 possam se comunicar com eles.
+  * **2 Subnets Privadas para Dados (Data):** Uma em cada AZs. Esta é a camada mais segura, nela irá hospedar o banco de dados RDS e os pontos de acesso do EFS (EFS Mount Target), garantindo que apenas as EC2 possam se comunicar com eles.
 
 - **Conectividade e Roteamento:**
   * Um **Internet Gateway (IGW)** foi anexado à VPC para funcionar como a porta de entrada e saída para a internet.
@@ -80,15 +80,33 @@ Para facilitar a criação de VPCs, a AWS possui uma maneira mais rápida e efic
 
 * **Número de sub-redes públicas:** `2` (O assistente irá nomeá-las e distribuir os IPs, exemplo: 10.0.1.0/24, 10.0.2.0/24)
 
-* **Número de sub-redes privadas:** `4` (Estas serão nossas sub-redes de Aplicação (App) onde irão ficar as duas EC2 da aplicação. Ex: 10.0.3.0/24, 10.0.4.0/24 e também serão usadas para o Data onde ficará o RDS). Após a criação das subnets privadas, o assistente pode acabar deixando o nome delas bem genérico, para seguir a organização da aplicação, é uma boa escolha deixar os nomes `Private subnet(App)1`, `Private subnet(App)2`, `Private subnet(Data)1` e `Private subnet (Data)2` como mostra no diagrama do projeto.
+* **Número de sub-redes privadas:** `4` (Estas serão nossas sub-redes de Aplicação (App) onde irão ficar as duas EC2 da aplicação. Exemplo: 10.0.3.0/24, 10.0.4.0/24 e também serão usadas para o Data onde ficará o RDS). Após a criação das subnets privadas, o assistente pode acabar deixando o nome delas bem genérico, para seguir a organização da aplicação, é uma boa escolha deixar os nomes `Private subnet(App)1`, `Private subnet(App)2`, `Private subnet(Data)1` e `Private subnet (Data)2` como mostra no diagrama do projeto.
 
 * O **internet Gateway** será gerado automaticamente pelo assistente, logo não é preciso adiciona-lo manualmente.
-
-* **Gateways NAT:** Selecione "Nenhum" (posteriomente iremos adiciona-los manualmente na aplicação).
 
 * **Endpoints da VPC:** Mantenha como "Nenhum".
 
 * Agora clique em **Criar VPC.**
+
+## Etapa 1.3: NAT Gateway (A saída segura para a Internet)
+As instâncias EC2 nas sub-redes privadas (App e Data) estão seguras, pois não podem ser acessadas diretamente da internet. No entanto, elas precisam de uma forma de **iniciar** conexões com a internet para tarefas essenciais, como baixar atualizações de segurança do Ubuntu (`apt update`) ou baixar as imagens Docker.
+
+É aqui que entra o **NAT (Network Address Translation) Gateway**. Ele atua como um "intermediário" seguro, posicionado na sub-rede pública. O fluxo de tráfego funciona da seguinte forma:
+
+-  Uma instância EC2 na sub-rede privada envia uma solicitação para a internet.
+-  A Tabela de Rotas daquela sub-rede privada direciona essa solicitação para o NAT Gateway.
+-  O NAT Gateway, que possui um endereço de IP público (IP Elástico), encaminha a solicitação para a internet em nome da instância privada.
+-  A resposta da internet volta para o NAT Gateway, que a repassa para a instância privada original.
+
+## Etapa 1.4: Criação do NAT Gateway
+
+**Crie os IPs Públicos (Elastic IPs):**
+- O NAT Gateway precisa de um endereço de IP público fixo.
+- No console da VPC, no menu à esquerda, clique em **"IPs Elásticos"**.
+
+
+
+
 
 ## Etapa 2: Criação do banco de dados Amazon RDS (Relational Database System)
 Para que dados como posts, usuários e configuração possam persistir na aplicação, precisamos de um banco de dados para que essa possibilidade seja possível, com isso, vamos usar o **Amazon RDS (Relational Database System).** O RDS é um serviço de banco de dados relacional gerenciado, o que significa que a AWS automatiza tarefas complexas e repetitivas, como provisionamento de hardware, instalação de um sistema operacional, aplicação de patches de segurança e backups. Isso nos permite focar no desenvolvimento da aplicação em si, ao invés de gerenciar o banco de dados.
