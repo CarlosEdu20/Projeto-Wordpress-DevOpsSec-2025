@@ -294,8 +294,78 @@ O script criado realiza as seguintes tarefas:
 - Em dados do usuário, clique em **"Escolher arquivo"** e suba o script.
 - E clique em **"Criar modelos de execução"**.
 
-Ao final desses passosm, o template será mostrado no painel.
+Ao final desses passos, o template será mostrado no painel.
 <img width="1661" height="391" alt="image" src="https://github.com/user-attachments/assets/482d3462-4014-44e1-880a-c28bbd8e840b" />
+
+
+<img width="1912" height="815" alt="image" src="https://github.com/user-attachments/assets/7d41578d-a373-409c-bd77-614f4b16879f" />
+
+## Etapa 5: Balanceamento de Carga com Application Load Balancer (ALB)
+
+O Application Load Balancer (ALB) atua como uma **"porta de entrada "** da nossa aplicação. Ele é uma ponte de contato com a internet e é responsável por gerenciar todo o tráfego de entrada de forma eficiente e segura, cumprindo duas funções principais descritas neste projeto:
+
+- **Distribuição de Tráfego:** O ALB recebe todas as solicitações dos usuários e as distribui de forma equilibrada entre as instâncias EC2 saudáveis (funcionando) que estão rodando em diferentes Zonas de Disponibilidade. Isso evita que uma única instância fique sobrecarregada e melhora o desempenho geral do site.
+
+2.  **Configuração de Health Check:** O ALB, através de seu **Grupo de Destino (Target Group)**, realiza verificações de saúde constantes em cada instância. Ele foi configurado para acessar a página inicial (`/`) de cada servidor via HTTP. Se uma instância falhar em responder ou retornar um erro, o ALB a marca como "não saudável" e para de enviar tráfego para ela imediatamente, redirecionando os usuários para as instâncias que estão operando normalmente. Isso garante a resiliência e a confiabilidade da aplicação.
+
+Adicionalmente, o ALB é um serviço altamente disponível, posicionado nas **duas sub-redes públicas** para garantir que o site permaneça acessível mesmo com a falha de uma Zona de Disponibilidade inteira.
+
+## Etapa 5.1: Criação do Application Load Balancer
+- No console da EC2, no menu à esquerda, clique em **"Load Balancers"**.
+- Logo após clique em **"Criar load balancer"**
+
+<img width="1897" height="842" alt="image" src="https://github.com/user-attachments/assets/b2374cbd-adac-4ff8-b1e6-de9e572a2808" />
+
+- Selecione o card do application load balancer e clique em **"criar"**
+
+<img width="1915" height="758" alt="image" src="https://github.com/user-attachments/assets/bb6a0d4f-ad4c-43ab-b9d8-bc2c189c8b20" />
+
+- Escolha um nome para seu load balancer
+- Esquema: Voltado para internet
+- Tipo de endereço do balanceador de carga: IPv4
+
+<img width="1848" height="665" alt="image" src="https://github.com/user-attachments/assets/0dde7ad3-395b-4cba-96ae-b7a1183dfc0a" />
+
+- VPC: selecione a sua VPC já criada.
+- Grupos de IPs: deixe essa opção desmarcada.
+- Zonas de disponibilidade e sub-redes: selecione suas subnets públicas que estão em Zonas de disponibilidade diferente.
+Observação: É importante que você tenha criado sua VPC em Zonas de disponibilidades diferentes para prosseguir nessa parte.
+
+<img width="1789" height="241" alt="image" src="https://github.com/user-attachments/assets/8a8aa533-f7bf-4f7e-8da8-4fd1a791f8dc" />
+
+- Selecione o grupo de segurança onde está as regras do load balancer.
+
+<img width="1871" height="514" alt="image" src="https://github.com/user-attachments/assets/510f59c4-b75a-414c-aeb2-911e373f8603" />
+
+- Protocolo: HTTP
+- Porta: 80
+- Agora clique em **"criar grupo de segurança"**
+- Abrirá uma nova aba com as seguintes informações:
+
+<img width="1906" height="834" alt="image" src="https://github.com/user-attachments/assets/890fadd6-2b6e-4b16-b565-cb37dd2cad5c" />
+
+- Escolha um tipo de destino: Instâncias
+- Digite um nome para seu grupo de destino
+
+<img width="1905" height="805" alt="image" src="https://github.com/user-attachments/assets/89f29358-fdb0-4246-a01f-a58a0256ddbc" />
+
+Verifique se as informações batem com a imagem.
+
+<img width="1891" height="840" alt="image" src="https://github.com/user-attachments/assets/2dbe20dd-8bf2-4cee-9486-80610b747967" />
+
+- **Porta da verificação:** Porta de tráfego (Traffic port)
+- **Limite íntegro:** 2 verificações consecutivas
+- **Limite não íntegro:** 2 verificações consecutivas
+- **Tempo limite:** 5 segundos
+- **Intervalo:** 30 segundos
+- **Códigos de sucesso:** 200
+
+Essa configuração de verificação de saúde do Application Load Balancer foi projetada para criar um sistema resiliente e com capacidade de autocorreção. A cada 30 segundos, o balanceador testa a página inicial de cada instância na porta 80, esperando uma resposta de sucesso (código 200 OK) em menos de 5 segundos.
+
+
+
+
+
 
 
 
