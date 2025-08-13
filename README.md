@@ -89,13 +89,13 @@ Para facilitar a criação de VPCs, a AWS possui uma maneira mais rápida e efic
 * Agora clique em **Criar VPC.**
 
 ## Etapa 1.3: NAT Gateway (A saída segura para a Internet)
-As instâncias EC2 nas sub-redes privadas (App e Data) estão seguras, pois não podem ser acessadas diretamente da internet. No entanto, elas precisam de uma forma de **iniciar** conexões com a internet para tarefas essenciais, como baixar atualizações de segurança do Ubuntu (`apt update`) ou baixar as imagens Docker.
+As instâncias EC2 nas sub-redes privadas (App e Data) estão seguras, pois não podem ser acessadas diretamente da internet já que não recebem IPs. No entanto, elas precisam de uma forma de se conectar com as conexões de internet para tarefas essenciais, como baixar as atualizações de pacotes do Ubuntu (`apt update`) ou baixar as imagens Docker.
 
-É aqui que entra o **NAT (Network Address Translation) Gateway**. Ele atua como um "intermediário" seguro, posicionado na sub-rede pública. O fluxo de tráfego funciona da seguinte forma:
+É nesse cenário que entra o **NAT (Network Address Translation) Gateway**. Ele atua como uma "ponte" segura, posicionado nas sub-redes públicas. O fluxo de tráfego funciona da seguinte forma:
 
 -  Uma instância EC2 na sub-rede privada envia uma solicitação para a internet.
 -  A Tabela de Rotas daquela sub-rede privada direciona essa solicitação para o NAT Gateway.
--  O NAT Gateway, que possui um endereço de IP público (IP Elástico), encaminha a solicitação para a internet em nome da instância privada.
+-  O NAT Gateway, que possui um endereço de IP público (IP Elástico), encaminha a solicitação para a o Internet Gateway, que possui acesso à internet, em nome da instância privada.
 -  A resposta da internet volta para o NAT Gateway, que a repassa para a instância privada original.
 
 ## Etapa 1.4: Criação do NAT Gateway
