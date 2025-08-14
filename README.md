@@ -157,8 +157,12 @@ wordpress-rtb-private2-us-east-2b: aqui é onde irão as outras duas subnets pri
 * Selecione a subnet-private(app1) e subnet-private(app2).
 * Clique **"Salvar associações"**.
 
+
+### Mapa dos recursos.
+
 <img width="1640" height="530" alt="image" src="https://github.com/user-attachments/assets/5eed27a5-4a1a-464a-b20b-f036ea881e42" />
 
+Ao final desse processo, o mapa de recursos devem estar parecido com esse mostrado na imagem.
   
 
 
