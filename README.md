@@ -325,12 +325,37 @@ As configurações escolhidas para o RDS foram:
   
 * **Disponibilidade (Multi-AZ):** Visando o controle de custos para este ambiente de aprendizado, a funcionalidade de Multi-AZ foi desativada. Em um ambiente de produção real, ativar o Multi-AZ é uma melhor prática crucial, pois cria uma réplica de standby do banco de dados em outra Zona de Disponibilidade, garantindo a recuperação automática e rápida em caso de falha da instância primária.
 
-## Etapa 3.1: Passo a passo da criação do RDS
+## Etapa 3.1: Criação do Grupo de Sub-redes de Banco de Dados (RDS)
+O Grupo de Sub-redes de Banco de Dados (DB Subnet Group) é um componente de configuração para o Amazon RDS. Sua função é definir uma coleção de sub-redes (geralmente privadas) dentro de uma VPC onde o Amazon RDS tem permissão para provisionar uma instância de banco de dados. Ao criar este grupo, garantimos que nosso banco de dados seja lançado na camada mais segura da nossa rede, isolado do acesso direto da internet, e com a capacidade de operar em múltiplas Zonas de Disponibilidade para alta resiliência.
+
 No console da AWS, na barra de busca, pesquise por "RDS" e selecione o serviço.
 
 <img width="702" height="114" alt="image" src="https://github.com/user-attachments/assets/2170e0b8-ab15-4933-951e-6746e927a2dd" />
 
+- Na página do RDS vá em **"Grupos de sub-redes"** e depois clique em **"Criar grupo de sub-redes de banco de dados"**.
+
+
+<img width="1884" height="792" alt="image" src="https://github.com/user-attachments/assets/6bab8dae-ae5e-43ec-b6f1-d9661b7fd56c" />
+
+- **Nome:** Selecione um nome para seu grupo.
+- **Descrição:** Digite uma descrição
+- **VPC:** Escolha sua VPC já criada.
+
+<img width="1886" height="615" alt="image" src="https://github.com/user-attachments/assets/ebd82499-f009-42b7-92a6-13950c24b961" />
+
+- **Zonas de disponibilidade:** Selecione as zonas `us-east-2a` e `us-east-2b`.
+- **Sub-redes:** selecione as subnets privadas que estão em zonas diferentes.
+- Clique em **Criar**.
+
+
+## Etapa 3.2: Passo a passo da criação do RDS
+No console da AWS, na barra de busca, pesquise por "RDS" e selecione o serviço.
+
+<img width="702" height="114" alt="image" src="https://github.com/user-attachments/assets/2170e0b8-ab15-4933-951e-6746e927a2dd" />
+
+
 - Na página do RDS vá em **"Banco de dados"** e depois clique em **"Criar banco de dados"**.
+
 
 <img width="1887" height="839" alt="image" src="https://github.com/user-attachments/assets/dc84ba08-e8c8-4efe-86a2-fc4bb2f762f9" />
 
@@ -513,9 +538,12 @@ Observação: É importante que você tenha criado sua VPC em Zonas de disponibi
 
 <img width="1905" height="805" alt="image" src="https://github.com/user-attachments/assets/89f29358-fdb0-4246-a01f-a58a0256ddbc" />
 
-Verifique se as informações batem com a imagem.
+- Verifique se as informações batem com a imagem.
+- Vá em **"Configurações avançadas de verificação de integridade"**.
 
 <img width="1891" height="840" alt="image" src="https://github.com/user-attachments/assets/2dbe20dd-8bf2-4cee-9486-80610b747967" />
+
+Adicione as seguintes configurações:
 
 - **Porta da verificação:** Porta de tráfego (Traffic port)
 - **Limite íntegro:** 2 verificações consecutivas
