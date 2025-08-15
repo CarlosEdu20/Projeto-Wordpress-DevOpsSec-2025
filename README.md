@@ -406,7 +406,7 @@ As seguintes configurações serão usadas no EFS:
 <img width="1846" height="828" alt="image" src="https://github.com/user-attachments/assets/8ef2bf86-7862-4e36-9275-4c90c88c3d8f" />
 
 - Zona de disponibilidade: `us-east-2a`, `us-east-2b`
-- ID da sub-rede: `subnet-private3`, `subnet-private4`
+- ID da sub-rede: `subnet-private-data1`, `subnet-private-data2`
 - Grupos de segurança: `security-group efs`
 - Clique em **"próximo"**
 - Após revisar seu EFS, clique em **"Criar"**
@@ -415,8 +415,8 @@ As seguintes configurações serão usadas no EFS:
 
 Após a criação do seu EFS, anote o ID do Sistema de arquivos (ex: fs-0123...) ou o endereço de IP de um dos Mount Targets. Essa informação será útil para o script user-data que irá montar o EFS automaticamente nas instâncias EC2.
 
-## Etapa 4:  Automação com Launch Template e User Data
-Para que a arquitetura desse projeto seja completamente escalável e resiliente, precisamos de uma forma de lançar novas instâncias EC2 de forma totalmente automatizda, sem precisar ir manualmente no console. Para que as instâncias da EC2 sejam lançadas automaticamente, o Auto Scaling Group precisa de uma "receita de bolo" para saber exatamente como configurar um novo servidor. Essa receita é composta por duas peças chaves: o Launch Template e o script User Data.
+## Etapa 4: Automação com Launch Template e User Data
+Para que essa arquitetura desse projeto seja completamente escalável e resiliente, precisamos de uma forma de lançar novas instâncias EC2 de forma totalmente automatizda, sem precisar ir manualmente no console. Para que as instâncias da EC2 sejam lançadas automaticamente, o Auto Scaling Group precisa de uma "receita de bolo" para saber exatamente como configurar um novo servidor. Essa receita é composta por duas peças chaves: o Launch Template e o script User Data.
 
 ### Etapa 4.1: O Launch Template
 O Launch Template funciona como o **"molde"** para nossas instâncias EC2, demonstrando passo a passo de como serão criadas. Ele é um recurso da AWS onde salvamos todas as configurações base de uma instância, garantindo que cada novo servidor criado pelo Auto Scaling seja idêntico e consistente. Logo abaixo estão as informações de como criar o mesmo.
