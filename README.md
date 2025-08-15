@@ -386,7 +386,7 @@ No console da AWS, na barra de busca, pesquise por "RDS" e selecione o serviço.
 - **Recurso de computação:** Selecione `Não se conectar a um recurso de computação do EC2`.
 - **Tipo de rede:** `IPv4`.
 - **Nuvem privada virtual (VPC):** Selecione sua VPC já criada.
-- **Grupo de sub-redes de banco de dados:** Criar novo grupo de sub-redes do banco de dados.
+- **Grupo de sub-redes de banco de dados:** Selecione o grupo de subredes criado.
 - **Acesso público:** Selecione **Não**.
 
   <img width="1887" height="665" alt="image" src="https://github.com/user-attachments/assets/6b2c8edb-6944-4eb0-b758-b2394a3f03ae" />
@@ -446,27 +446,26 @@ Para que essa arquitetura desse projeto seja completamente escalável e resilien
 ### Etapa 4.1: O Launch Template
 O Launch Template funciona como o **"molde"** para nossas instâncias EC2, demonstrando passo a passo de como serão criadas. Ele é um recurso da AWS onde salvamos todas as configurações base de uma instância, garantindo que cada novo servidor criado pelo Auto Scaling seja idêntico e consistente. Logo abaixo estão as informações de como criar o mesmo.
 
-- No painel da EC2, clique em "Modelos de execução".
-- Depois clique em **"Criar modelo de execução**.
+- No painel da EC2, clique em **"Modelos de execução"**.
+- Depois clique em **"Criar modelo de execução"**.
 
 <img width="1258" height="610" alt="image" src="https://github.com/user-attachments/assets/77b6f442-a585-41b9-93b1-75c6f5d8f288" />
 
-- Coloque um nome para o seu modelo de execução.
-- Coloque também uma descrição sobre o que ele faz.
+- Digite um nome para o seu modelo de execução.
+- Digite também uma descrição sobre o que ele faz.
 
 <img width="1269" height="815" alt="image" src="https://github.com/user-attachments/assets/9c3f54cc-1bbd-432c-8906-f37021fec855" />
 
 - Selecione a AMI do Ubuntu.
-- Tipo de instância: t2.micro
+- Tipo de instância: `t2.micro`.
 
 <img width="1265" height="652" alt="image" src="https://github.com/user-attachments/assets/2bd848dd-d292-4837-bdfc-775ef711db43" />
 
 - Par de chaves: Selecione um par de chaves existente ou crie um novo. Ele será **necessário para permitir seu acesso administrativo** à instância via SSH para qualquer depuração.
+  
 - Configuração de rede:  Deixe o campo 'Sub-rede' vazio, mas em 'Grupos de segurança', **selecione o grupo de segurança da EC2** que criamos anteriormente.
-- Agora vá em **"detalhes avançados"** e vá até o final da seção.
-
-
-
+  
+- Agora, expanda a seção **"Detalhes avançados"** e role até o final, onde encontraremos o campo para inserir o script de User Data.
 
 ### Etapa 4.2: O Script User Data 
 Se o Launch Template é o molde, o script `user-data` é o **"robô construtor"** que entra em ação na primeira vez que a instância é ligada. Ele executa uma sequência de passos para transformar uma instância Ubuntu "limpa" em um servidor WordPress totalmente funcional e conteinerizado. O Script do user-data está disponível neste repositório, antes de fazer o upload, lembre-se de **editar as variáveis** no início do script com suas informações (credenciais do RDS, ID do EFS, etc.). O possui placeholders de onde colocar suas credenciais.
@@ -486,7 +485,6 @@ O script criado realiza as seguintes tarefas:
 
 Ao final desses passos, o template será mostrado no painel.
 <img width="1661" height="391" alt="image" src="https://github.com/user-attachments/assets/482d3462-4014-44e1-880a-c28bbd8e840b" />
-
 
 
 ## Etapa 5: Balanceamento de Carga com Application Load Balancer (ALB)
@@ -510,47 +508,48 @@ Adicionalmente, o ALB é um serviço altamente disponível, posicionado nas **du
 <img width="1915" height="758" alt="image" src="https://github.com/user-attachments/assets/bb6a0d4f-ad4c-43ab-b9d8-bc2c189c8b20" />
 
 - Escolha um nome para seu load balancer
-- Esquema: Voltado para internet
-- Tipo de endereço do balanceador de carga: IPv4
+- **Esquema:** Voltado para internet
+- **Tipo de endereço do balanceador de carga:** IPv4
 
 <img width="1848" height="665" alt="image" src="https://github.com/user-attachments/assets/0dde7ad3-395b-4cba-96ae-b7a1183dfc0a" />
 
-- VPC: selecione a sua VPC já criada.
-- Grupos de IPs: deixe essa opção desmarcada.
-- Zonas de disponibilidade e sub-redes: selecione suas subnets públicas que estão em Zonas de disponibilidade diferente.
-Observação: É importante que você tenha criado sua VPC em Zonas de disponibilidades diferentes para prosseguir nessa parte.
+- **VPC:** selecione a sua VPC já criada.
+- **Grupos de IPs:** deixe essa opção desmarcada.
+- **Zonas de disponibilidade e sub-redes:** selecione suas subnets públicas que estão em Zonas de disponibilidade diferente.
+  
+**Observação:** É importante que você tenha criado sua VPC em Zonas de disponibilidades diferentes para prosseguir nessa parte.
 
 <img width="1789" height="241" alt="image" src="https://github.com/user-attachments/assets/8a8aa533-f7bf-4f7e-8da8-4fd1a791f8dc" />
 
-- Selecione o grupo de segurança onde está as regras do load balancer.
+- Selecione o grupo de segurança onde contém as regras para o load balancer.
 
 <img width="1871" height="514" alt="image" src="https://github.com/user-attachments/assets/510f59c4-b75a-414c-aeb2-911e373f8603" />
 
-- Protocolo: HTTP
-- Porta: 80
+- **Protocolo:** `HTTP`.
+- **Porta:** `80`.
 - Na ação padrão, clique em **"Criar grupo de destino"** (Create target group)
 - Abrirá uma nova aba com as seguintes informações:
 
 <img width="1906" height="834" alt="image" src="https://github.com/user-attachments/assets/890fadd6-2b6e-4b16-b565-cb37dd2cad5c" />
 
-- Escolha um tipo de destino: Instâncias
+- Escolha um tipo de destino: `Instâncias`
 - Digite um nome para seu grupo de destino
 
 <img width="1905" height="805" alt="image" src="https://github.com/user-attachments/assets/89f29358-fdb0-4246-a01f-a58a0256ddbc" />
 
-- Verifique se as informações batem com a imagem.
+- Verifique se suas informações estão em conformidade com a imagem.
 - Vá em **"Configurações avançadas de verificação de integridade"**.
 
 <img width="1891" height="840" alt="image" src="https://github.com/user-attachments/assets/2dbe20dd-8bf2-4cee-9486-80610b747967" />
 
 Adicione as seguintes configurações:
 
-- **Porta da verificação:** Porta de tráfego (Traffic port)
-- **Limite íntegro:** 2 verificações consecutivas
-- **Limite não íntegro:** 2 verificações consecutivas
-- **Tempo limite:** 5 segundos
-- **Intervalo:** 30 segundos
-- **Códigos de sucesso:** 200
+- **Porta da verificação:** `Porta de tráfego (Traffic port)`.
+- **Limite íntegro:** `2 verificações consecutivas`.
+- **Limite não íntegro:** `2 verificações consecutivas`.
+- **Tempo limite:** `5 segundos`.
+- **Intervalo:** `30 segundos`.
+- **Códigos de sucesso:** `200`.
 
 Essa configuração de verificação de saúde do Application Load Balancer foi projetada para criar um sistema resiliente e com capacidade de autocorreção. A cada 30 segundos, o balanceador testa a página inicial de cada instância na porta 80, esperando uma resposta de sucesso (código 200 OK) em menos de 5 segundos. Na tela seguinte, de "Registrar destinos", não selecione nenhuma instância. Deixe a lista vazia e apenas clique em "Criar grupo de destino". O Auto Scaling Group cuidará do registro automaticamente.
 
@@ -562,7 +561,7 @@ Verifique no seu resumo se está tudo certo e clique em **criar load balancer**.
 
 
 ## Etapa 6: Escalabilidade e Resiliência com Auto Scaling Group (ASG)
-O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da nossa aplicação. Sua função é gerenciar o ciclo de vida das nossas instâncias EC2 para garantir que a aplicação tenha sempre a capacidade ideal para atender à demanda dos usuários e se manter resiliente a falhas, cumprindo todos os requisitos do projeto. O mesmo usa-se dos seguintes requisitos.
+O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da aplicação. Sua função é gerenciar o ciclo de vida das instâncias EC2 para garantir que a aplicação tenha sempre a capacidade ideal para atender à demanda dos usuários e se manter resiliente a falhas, cumprindo todos os requisitos do projeto. O mesmo usa-se dos seguintes requisitos.
 
 - **Uso do Launch Template:** O ASG utiliza-se do Launch Template como a "planta" para criar cada nova instância, garantindo que todos os servidores sejam idênticos e configurados corretamente a partir do user data.
 
