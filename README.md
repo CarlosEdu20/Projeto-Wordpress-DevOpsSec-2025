@@ -313,7 +313,19 @@ Criaremos novamente outro grupo de segurança, adicionando o nome, selecionando 
 
 Essa configuração adicionada permite que apenas as EC2 do projeto acessem os arquivos do EFS e impedem que qualquer outro recurso (interno ou externo) consiga montar ou ler o sistema de arquivos. Logo após adicionar essas configurações, clique em "Criar grupo de segurança.
 
-## Etapa 3: Criação do Amazon EFS (Elastic File System)
+## Etapa 3: Criação do banco de dados Amazon RDS (Relational Database System)
+Para que dados como posts, usuários e configuração possam persistir na aplicação, precisamos de um banco de dados para que essa possibilidade seja possível, com isso, vamos usar o **Amazon RDS (Relational Database System).** O RDS é um serviço de banco de dados relacional gerenciado, o que significa que a AWS automatiza tarefas complexas e repetitivas, como provisionamento de hardware, instalação de um sistema operacional, aplicação de patches de segurança e backups. Isso nos permite focar no desenvolvimento da aplicação em si, ao invés de gerenciar o banco de dados.
+
+As configurações escolhidas para o RDS foram:
+* **Mecanismo (Engine):** Foi escolhido o MySQL Community, versão 8.0.42, ele é um dos sistemas de gerenciamento de banco de dados de código aberto mais populares do mundo e totalmente compatível com os requisitos do WordPress.
+  
+* **Tipo de Instância:** Para esse projeto bem simples e didático e para reduzir os custos, foi selecionada a instância `db.t3.micro`. Ela faz parte da família de instâncias "burstable", oferecendo um desempenho de linha de base com a capacidade de "burst" (picos de performance) para lidar com cargas de trabalho variáveis, ideal para um site com tráfego de baixo a moderado.
+  
+* **Posicionamento na Rede:** O banco de dados foi estrategicamente posicionado na camada mais segura da rede: as sub-redes privadas de dados. Essa configuração garante que ele não tenha nenhuma exposição à internet e só possa ser acessado pela nossa camada de aplicação (as instâncias EC2), conforme definido pelas regras do Security Group do RDS.
+  
+* **Disponibilidade (Multi-AZ):** Visando o controle de custos para este ambiente de aprendizado, a funcionalidade de Multi-AZ foi desativada. Em um ambiente de produção real, ativar o Multi-AZ é uma melhor prática crucial, pois cria uma réplica de standby do banco de dados em outra Zona de Disponibilidade, garantindo a recuperação automática e rápida em caso de falha da instância primária.
+
+## Etapa 4: Criação do Amazon EFS (Elastic File System)
  **Amazon EFS (Elastic File System)** é um serviço da AWS que atua como um sistema de arquivos centralizado e compartilhado, semelhante a um “HD de rede” na nuvem da AWS. Ele fornece armazenamento escalável e de alta disponibilidade, permitindo que múltiplas instâncias EC2 acessem os mesmos arquivos simultaneamente. Sua implementação é essencial para garantir a **persistência e consistência dos dados** em arquiteturas com mais de uma instância. Por exemplo, se um usuário fizer upload de uma imagem para a instância **A**, a instância **B** não terá acesso a esse arquivo caso utilize apenas armazenamento local, o que pode gerar falhas e inconsistências na aplicação. Com o EFS, todos os arquivos ficam centralizados, garantindo que qualquer instância conectada tenha acesso imediato às alterações realizadas por outra, eliminando problemas de sincronização e preservando a integridade dos dados.
 
 As seguintes configurações serão usadas no EFS:
@@ -324,7 +336,7 @@ As seguintes configurações serão usadas no EFS:
 
 **Segurança de Acesso:** O acesso aos Mount Targets é rigorosamente controlado pelo security group do efs, que só permite conexões na porta 2049 (protocolo NFS) vindas exclusivamente do security group da EC2.
 
-## Etapa 3.1: Passo a passo para criação do EFS na AWS
+## Etapa 4.1: Passo a passo para criação do EFS na AWS
 
 - No console da AWS, pesquise pelo serviço do EFS.
 
