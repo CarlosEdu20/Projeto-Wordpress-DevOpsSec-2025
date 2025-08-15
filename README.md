@@ -580,7 +580,7 @@ Antes de começamos o passo a passo da criação do ASG, seu launch template e s
 <img width="1901" height="839" alt="image" src="https://github.com/user-attachments/assets/df405261-0dd0-4d3d-b76a-fbcbfc3b91cf" />
 
 - Clique em **"Criar grupo do Auto Scaling"**.
-- Após clicar em criar, você será direcionado a essa tela.
+- Após clicar, você será direcionado para a seguinte tela.
 
 <img width="1899" height="848" alt="image" src="https://github.com/user-attachments/assets/c2ec8903-e2f7-4067-bee7-96ea50997900" />
 
@@ -598,7 +598,7 @@ Antes de começamos o passo a passo da criação do ASG, seu launch template e s
 <img width="1910" height="706" alt="image" src="https://github.com/user-attachments/assets/faad4486-d8dd-420b-ad00-37cee1d91e19" />
 
 - **Balanceamento de carga:** Anexar a um balanceador de carga existente.
-- **Grupos de destino de balanceador de carga existentes:** Selecione seu load balancer criado.
+- **Grupos de destino de balanceador de carga existentes:** Selecione o seu load balancer criado.
 - Clique em **"próximo"**.
 
 <img width="1889" height="515" alt="image" src="https://github.com/user-attachments/assets/9c17e8ce-553e-415e-85d8-29489da34825" />
