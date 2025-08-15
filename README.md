@@ -636,7 +636,6 @@ As configurações específicas foram:
 Essa combinação de regras garante que a aplicação responda dinamicamente à demanda real dos usuários, crescendo para suportar picos de tráfego e encolhendo para economizar recursos, tudo de forma 100% automática.
 
 
-## Etapa 7: Possíveis melhorias
 
 
 
