@@ -26,8 +26,8 @@ usermod -a -G docker ubuntu
 apt install docker-compose-plugin -y
 
 
-EFS_ID="fs-0b340dbc5e8755c0a"
-AWS_REGION="us-east-2"
+EFS_ID="SEU_EFS_ID"
+AWS_REGION="SUA_REGIAO_AWS"
 EFS_MOUNT_POINT="/mnt/efs-wordpress"
 
 mkdir -p ${EFS_MOUNT_POINT}
@@ -40,10 +40,10 @@ mkdir -p ${PROJECT_DIR}
 WORDPRESS_FILES_PATH="${EFS_MOUNT_POINT}/html"
 mkdir -p ${WORDPRESS_FILES_PATH}
 
-DB_HOST="wordpress-db.cd4k44mq0kyk.us-east-2.rds.amazonaws.com"
-DB_USER="admin"
-DB_PASSWORD="carlos10"
-DB_NAME="wordpress-db"
+DB_HOST="SEU_ENDPOINT_DO_RDS_AQUI"
+DB_USER="SEU_USUARIO_DO_BANCO_AQUI"
+DB_PASSWORD="SUA_SENHA_DO_BANCO_AQUI"
+DB_NAME="SEU_NOME_DO_BANCO_AQUI"
 
 cat <<EOF > ${PROJECT_DIR}/docker-compose.yml
 version: '3.8'
