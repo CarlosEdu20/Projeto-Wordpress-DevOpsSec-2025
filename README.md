@@ -573,7 +573,7 @@ O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da aplic
 
 
 # Etapa 6.1: Criação do Auto Scaling Group
-Antes de começamos o passo a passo da criação do ASG, seu launch template e seu Target Group já devem está devidamente criados.
+Antes de começarmos o passo a passo da criação do ASG, seu launch template e seu Target Group já devem estar devidamente criados.
 
 - No console da EC2, no menu à esquerda, role até o final e clique em **"Grupos do Auto Scaling".**
 
@@ -603,34 +603,41 @@ Antes de começamos o passo a passo da criação do ASG, seu launch template e s
 
 <img width="1889" height="515" alt="image" src="https://github.com/user-attachments/assets/9c17e8ce-553e-415e-85d8-29489da34825" />
 
-Nessa parte deixe tudo por padrão. 
+Na etapa de "Configurar opções avançadas", você pode manter as configurações de monitoramento padrão do CloudWatch e clicar em "Próximo".
 
 <img width="1726" height="654" alt="image" src="https://github.com/user-attachments/assets/f8891775-7197-465b-92d7-ef814d6840cf" />
  
 - **Tipos de verificações de integridade adicionais:** Ative as verificações de integridade do Elastic Load Balancing.
-Com essa opção ativada, o Auto Scaling Group passa a considerar o status de saúde reportado pelo Application Load Balancer para determinar se uma instância está funcional
+Com essa opção ativada, o Auto Scaling Group passa a considerar o status de saúde reportado pelo Application Load Balancer para determinar se uma instância está funcional.
+
 - Clique em **"próximo"**.
 
 <img width="1884" height="715" alt="image" src="https://github.com/user-attachments/assets/a8e288b7-29ef-4386-a98a-7cb8232afb4e" />
 
 - **Capacidade desejada: 2**
 - **Capacidade mínima desejada: 2**
-Este valor foi escolhido para garantir **Alta Disponibilidade (High Availability)** desde o primeiro momento. Como nossa arquitetura está distribuída em duas Zonas de Disponibilidade (AZs), manter um mínimo de duas instâncias garante que, se uma instância (ou uma AZ inteira) falhar, a outra instância na outra AZ continuará servindo o tráfego, evitando que o site saia do ar. O Auto Scaling Group então trabalhará para substituir a instância que falhou, retornando ao estado saudável de duas instâncias.
+Este valor foi escolhido para garantir **Alta Disponibilidade (High Availability)** desde o primeiro momento. Como a arquitetura está distribuída em duas Zonas de Disponibilidade (AZs), manter um mínimo de duas instâncias garante que, se uma instância (ou uma AZ inteira) falhar, a outra instância na outra AZ continuará servindo o tráfego, evitando que o site saia do ar. O Auto Scaling Group então trabalhará para substituir a instância que falhou, retornando ao estado saudável de duas instâncias.
 
 - **Capacidade máxima desejada: 4**
 O valor máximo de quatro instâncias define o limite de **Escalabilidade** da nossa aplicação e também atua como uma medida de **Controle de Custos**. Se houver um pico de acessos e a utilização da CPU ultrapassar nosso alvo de 70%, o Auto Scaling Group tem permissão para adicionar até mais duas instâncias para lidar com a carga. Ao mesmo tempo, este limite impede que o grupo crie um número ilimitado de instâncias em caso de um pico de tráfego anormal ou um ataque, o que poderia levar a uma fatura inesperada na AWS.
 
 <img width="1520" height="610" alt="image" src="https://github.com/user-attachments/assets/e21e6c64-16ea-4916-8e0f-4b2ad1d21fa5" />
 
-Para automatizar a escalabilidade, foi configurada uma **"Política de dimensionamento com monitoramento do objetivo" (Target Tracking Policy)**. Esta é uma política inteligente que funciona como um termostato para a nossa aplicação, ajustando automaticamente o número de instâncias para manter o desempenho ideal.
+Para automatizar a escalabilidade, foi configurada uma **"Política de dimensionamento com monitoramento do objetivo" (Target Tracking Policy)**. Esta é uma política inteligente que funciona como um termostato para a nossa aplicação, ajustando automaticamente o número de instâncias para manter o desempenho ideal para a aplicação.
 
 As configurações específicas foram:
 
 - **Tipo de Métrica:** Média de utilização da CPU O Auto Scaling Group irá monitorar constantemente a carga de processamento média de todas as instâncias em execução.
+  
 - **Valor de Destino:** 70%. Este é o nosso "ponto de equilíbrio". Se o tráfego no site aumentar e a média de uso da CPU de todas as instâncias ultrapassar 70%, o Auto Scaling Group automaticamente adicionará novas instâncias para distribuir a carga. Da mesma forma, se o tráfego diminuir e a CPU ficar ociosa, ele removerá instâncias para otimizar os custos (sempre respeitando a capacidade mínima de 2).
+  
 - **Aquecimento da Instância:** 300 segundos. Esta configuração instrui o Auto Scaling a esperar 5 minutos antes de incluir uma instância recém-lançada nas métricas de CPU. Isso dá tempo para a instância iniciar, executar o script `user-data` e estabilizar, evitando que picos de uso durante a inicialização causem decisões de escalabilidade prematuras.
 
 Essa combinação de regras garante que a aplicação responda dinamicamente à demanda real dos usuários, crescendo para suportar picos de tráfego e encolhendo para economizar recursos, tudo de forma 100% automática.
+
+
+## Etapa 7: Possíveis melhorias
+
 
 
 
