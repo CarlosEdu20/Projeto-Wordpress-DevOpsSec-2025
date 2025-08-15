@@ -440,10 +440,10 @@ As seguintes configurações serão usadas no EFS:
 
 Após a criação do seu EFS, anote o ID do Sistema de arquivos (ex: fs-0123...) ou o endereço de IP de um dos Mount Targets. Essa informação será útil para o script user-data que irá montar o EFS automaticamente nas instâncias EC2.
 
-## Etapa 4: Automação com Launch Template e User Data
+## Etapa 5: Automação com Launch Template e User Data
 Para que essa arquitetura desse projeto seja completamente escalável e resiliente, precisamos de uma forma de lançar novas instâncias EC2 de forma totalmente automatizda, sem precisar ir manualmente no console. Para que as instâncias da EC2 sejam lançadas automaticamente, o Auto Scaling Group precisa de uma "receita de bolo" para saber exatamente como configurar um novo servidor. Essa receita é composta por duas peças chaves: o Launch Template e o script User Data.
 
-### Etapa 4.1: O Launch Template
+### Etapa 5.1: O Launch Template
 O Launch Template funciona como o **"molde"** para nossas instâncias EC2, demonstrando passo a passo de como serão criadas. Ele é um recurso da AWS onde salvamos todas as configurações base de uma instância, garantindo que cada novo servidor criado pelo Auto Scaling seja idêntico e consistente. Logo abaixo estão as informações de como criar o mesmo.
 
 - No painel da EC2, clique em **"Modelos de execução"**.
@@ -467,7 +467,7 @@ O Launch Template funciona como o **"molde"** para nossas instâncias EC2, demon
   
 - Agora, expanda a seção **"Detalhes avançados"** e role até o final, onde encontraremos o campo para inserir o script de User Data.
 
-### Etapa 4.2: O Script User Data 
+### Etapa 5.2: O Script User Data 
 Se o Launch Template é o molde, o script `user-data` é o **"robô construtor"** que entra em ação na primeira vez que a instância é ligada. Ele executa uma sequência de passos para transformar uma instância Ubuntu "limpa" em um servidor WordPress totalmente funcional e conteinerizado. O Script do user-data está disponível neste repositório, antes de fazer o upload, lembre-se de **editar as variáveis** no início do script com suas informações (credenciais do RDS, ID do EFS, etc.). O possui placeholders de onde colocar suas credenciais.
 
 O script criado realiza as seguintes tarefas:
@@ -487,7 +487,7 @@ Ao final desses passos, o template será mostrado no painel.
 <img width="1661" height="391" alt="image" src="https://github.com/user-attachments/assets/482d3462-4014-44e1-880a-c28bbd8e840b" />
 
 
-## Etapa 5: Balanceamento de Carga com Application Load Balancer (ALB)
+## Etapa 6: Balanceamento de Carga com Application Load Balancer (ALB)
 
 O Application Load Balancer (ALB) atua como uma **"porta de entrada "** da nossa aplicação. Ele é uma ponte de contato com a internet e é responsável por gerenciar todo o tráfego de entrada de forma eficiente e segura, cumprindo duas funções principais descritas neste projeto:
 
@@ -497,7 +497,7 @@ O Application Load Balancer (ALB) atua como uma **"porta de entrada "** da nossa
 
 Adicionalmente, o ALB é um serviço altamente disponível, posicionado nas **duas sub-redes públicas** para garantir que o site permaneça acessível mesmo com a falha de uma Zona de Disponibilidade inteira.
 
-## Etapa 5.1: Criação do Application Load Balancer
+## Etapa 6.1: Criação do Application Load Balancer
 - No console da EC2, no menu à esquerda, clique em **"Load Balancers"**.
 - Logo após clique em **"Criar load balancer"**
 
@@ -560,7 +560,7 @@ Após a aplicação destas configurações, clique no botão do círculo para at
 Verifique no seu resumo se está tudo certo e clique em **criar load balancer**.
 
 
-## Etapa 6: Escalabilidade e Resiliência com Auto Scaling Group (ASG)
+## Etapa 7: Escalabilidade e Resiliência com Auto Scaling Group (ASG)
 O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da aplicação. Sua função é gerenciar o ciclo de vida das instâncias EC2 para garantir que a aplicação tenha sempre a capacidade ideal para atender à demanda dos usuários e se manter resiliente a falhas, cumprindo todos os requisitos do projeto. O mesmo usa-se dos seguintes requisitos.
 
 - **Uso do Launch Template:** O ASG utiliza-se do Launch Template como a "planta" para criar cada nova instância, garantindo que todos os servidores sejam idênticos e configurados corretamente a partir do user data.
@@ -572,7 +572,7 @@ O serviço do Auto Scaling Group (ASG) atua como um **"Gerente de RH"** da aplic
 - **Escalabilidade baseada em CPU:** Foi configurada uma política de escalabilidade dinâmica. Se o uso médio de CPU de todas as instâncias ultrapassar 70%, o ASG automaticamente lançará automaticamente novas instâncias para lidar com o aumento da carga. Da mesma forma, ele pode remover instâncias se a carga diminuir, otimizando os custos.
 
 
-# Etapa 6.1: Criação do Auto Scaling Group
+# Etapa 7.1: Criação do Auto Scaling Group
 Antes de começarmos o passo a passo da criação do ASG, seu launch template e seu Target Group já devem estar devidamente criados.
 
 - No console da EC2, no menu à esquerda, role até o final e clique em **"Grupos do Auto Scaling".**
@@ -636,6 +636,15 @@ As configurações específicas foram:
 Essa combinação de regras garante que a aplicação responda dinamicamente à demanda real dos usuários, crescendo para suportar picos de tráfego e encolhendo para economizar recursos, tudo de forma 100% automática.
 
 
+## Próximos Passos e Melhorias
+
+Para evoluir ainda mais esta arquitetura, os próximos passos lógicos seriam:
+* **Infraestrutura como Código (IaC):** Automatizar toda a criação da infraestrutura utilizando Terraform ou AWS CloudFormation, conforme sugerido nas atividades extras.
+* **Monitoramento Avançado:** Criar dashboards detalhados no Amazon CloudWatch e configurar alarmes para notificar sobre falhas ou picos de uso.
+* **DNS Personalizado:** Utilizar o Amazon Route 53 para associar um domínio personalizado (ex: `www.meusite.com`) ao Application Load Balancer.
+* **Segurança Reforçada:** Implementar HTTPS no Load Balancer com um certificado do AWS Certificate Manager (ACM) para garantir tráfego criptografado.
+
+Com isso, o projeto seria ainda mais robusto. Porém devido a tempo e custos, apenas com esses passos mencionados, a aplicação atende bem aos requisitos pedidos.
 
 
 
