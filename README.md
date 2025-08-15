@@ -41,19 +41,19 @@ Antes de iniciar a replicação deste projeto, garanta que você tenha todos os 
 Caso todos esses requisitos estejam atendidos, siga as seguintes etapas de execução do projeto.
 
 ## Etapa 1: Criação e personalização da VPC
-A base de toda a arquitetura desta aplicação está na AWS VPC (Virtual Private Cloud). A VPC atua como um perímetro virtual, mantendo o sistema privado e totalmente isolado da internet pública. Essa separação é a primeira e mais importante camada de segurança para que os recursos que serão implantados em seu interior estejam completamente seguros e isolados. Para este projeto, foram considerado as seguintes configurações da VPC.
+A base de toda a arquitetura desta aplicação está na AWS VPC (Virtual Private Cloud). A VPC atua como um perímetro virtual, mantendo o sistema privado e totalmente isolado da internet pública. Essa separação é a primeira e mais importante camada de segurança para que os recursos que serão implantados em seu interior estejam completamente seguros e isolados. Para este projeto, foram consideradas as seguintes configurações da VPC.
 
 - **Endereçamento IP da VPC:** Foi escolhido o seguinte bloco IP `10.0.0.0/16`, o mesmo fornece mais de 65.000 endereços de IPs. Isso nos dá um espaço extremamente amplo para escalar a aplicação no futuro, adicionando novos serviços sem o risco de esgotar os endereços.
 
-- **Múltiplas Zonas de Disponibilidade (AZs):** A VPC foi alocada em duas zonas de disponibilidade distintas, o que garante alta disponibilidade em caso de falhas. Uma AZs é composta por um ou mais data centers discretos. Caso ocorra uma falha na zona us-east-2a, por exemplo, a us-east-2b continuará operando normalmente, garantindo que a aplicação permaneça no ar e acessível aos usuários.
+- **Múltiplas Zonas de Disponibilidade (AZs):** A VPC foi alocada em duas zonas de disponibilidade distintas, o que garante alta disponibilidade em caso de falhas. Uma AZ é composta por um ou mais data centers discretos. Caso ocorra uma falha na zona us-east-2a, por exemplo, a us-east-2b continuará operando normalmente, garantindo que a aplicação permaneça no ar e acessível aos usuários.
 
-- **Segmentação em 6 subnets:** Para garantir a segurança em camadas (princípio de "defesa em profundidade"), a VPC será divida em 6 sub-redes, sendo elas:
+- **Segmentação em 6 subnets:** Para garantir a segurança em camadas (princípio de "defesa em profundidade"), a VPC foi divida em 6 sub-redes, sendo elas:
 
-  * **2 Subnets Públicas:** Uma em cada AZs. Elas servem como a "zona desmilitarizada" (DMZ), abrigando recursos que precisam de acesso direto à internet, como nosso Application Load Balancer.
+  * **2 Subnets Públicas:** Uma em cada AZ. Elas servem como a "zona desmilitarizada" (DMZ), abrigando recursos que precisam de acesso direto à internet, como o Application Load Balancer.
     
-  * **2 Subnets Privadas para Aplicação (App):** Uma em cada AZs. Aqui residem nossas instâncias EC2 com o WordPress. As mesmas não são acessíveis diretamente pela internet, sendo protegidas pelo Application Load Balancer.
+  * **2 Subnets Privadas para Aplicação (App):** Uma em cada AZ. Aqui residem nossas instâncias EC2 com o WordPress. As mesmas não são acessíveis diretamente pela internet, sendo protegidas pelo Application Load Balancer.
   
-  * **2 Subnets Privadas para Dados (Data):** Uma em cada AZs. Esta é a camada mais segura, nela irá hospedar o banco de dados RDS e os pontos de acesso do EFS (EFS Mount Target), garantindo que apenas as EC2 possam se comunicar com eles.
+  * **2 Subnets Privadas para Dados (Data):** Uma em cada AZ. Esta é a camada mais segura, nela ficarão hospedados o banco de dados RDS e os pontos de acesso do EFS (EFS Mount Target), garantindo que apenas as EC2 possam se comunicar com eles.
 
 - **Conectividade e Roteamento:**
   * Um **Internet Gateway (IGW)** foi anexado à VPC para funcionar como a porta de entrada e saída para a internet.
@@ -65,15 +65,18 @@ A base de toda a arquitetura desta aplicação está na AWS VPC (Virtual Private
 ## Etapa 1.2: Passo a passo para criação da VPC na AWS
 Para facilitar a criação de VPCs, a AWS possui uma maneira mais rápida e eficiente para subir uma VPC na mesma, que é através do assistente "VPC e muito mais". Siga os passos a seguir:
 - Na barra de pesquisa do console, pesquise por VPC.
+
 <img width="919" height="187" alt="image" src="https://github.com/user-attachments/assets/cc3623cf-0fa5-423f-873b-071d9ea7ab8f" />
 
 - No painel da VPC, clique em "Suas VPCs" e, em seguida, em "Criar VPC".
 - Selecione a opção **"VPC e muito mais**.
 - Adicione as seguintes configurações:
+
 <img width="1912" height="783" alt="image" src="https://github.com/user-attachments/assets/0fab1690-43ce-407a-88f9-5da0e2aa3620" />
 
 * **Nome:** `defina um nome para sua VPC`
 * **Bloco CIDR IPv4:** `10.0.0.0/16`
+
 <img width="1912" height="653" alt="image" src="https://github.com/user-attachments/assets/961bdd97-3491-44ae-8717-f2de875c6088" />
 
 * **Número de zonas de disponibilidade (AZs):** `2`
@@ -110,10 +113,11 @@ As instâncias EC2 nas sub-redes privadas (App e Data) estão seguras, pois não
 - Repita mais uma vez o processo para ter um total de dois IPs Elásticos (um para cada NAT Gateway).
 
 **Crie os NAT Gateways:**
-Para esse projeto precisa-se de dois NAT gateway porque serão 2 instâncias.
+Foram criados dois NAT Gateways, um em cada Zona de Disponibilidade, para garantir a **alta disponibilidade**. Se uma zona falhar, as instâncias na outra zona ainda ainda possuirão uma saída para a internet.
 - Agora, no menu à esquerda, clique em **"Gateways NAT"** e em **"Criar gateway NAT"**.
 
 <img width="1892" height="693" alt="image" src="https://github.com/user-attachments/assets/5b65571f-8429-4099-b850-e06add6ba208" />
+
 - Digite um nome para seu NAT Gateway
 - Sub-rede: Selecione a sua primeira sub-rede pública (exemplo: public-subnet-a).
 - **Tipo de conectividade:** Público.
@@ -123,10 +127,11 @@ Para esse projeto precisa-se de dois NAT gateway porque serão 2 instâncias.
 ## Etapa 1.5: Configure as Tabelas de Rotas Privadas 
 As Tabelas de Rotas (Route Tables) são um conjunto de regras que atuam como o "GPS" da VPC, determinando para onde o tráfego de rede originado das sub-redes é direcionado. Para essa arquitetura, criei um esquema de roteamento resiliente e seguro com três tabelas principais:
 
-- wordpress-rtb-public: aqui é onde vão estar associadas as sub-redes públicas:
+- **wordpress-rtb-public:** Esta tabela deve estar associada às duas sub-redes públicas. Verifique na aba "Rotas" se a rota de destino 0.0.0.0/0 aponta para o **Internet Gateway (IGW)**, como mostra a imagem.
+  
 <img width="1585" height="498" alt="image" src="https://github.com/user-attachments/assets/674f8a3a-8930-4904-b65c-c49afd687a18" />
 
-- wordpress-rtb-private1-us-east-2a: aqui é onde vão ficar uma das duas subnets privadas
+- wordpress-rtb-private1-us-east-2a: Esta tabela atenderá as sub-redes privadas da Zona A.
   * Selecione uma tabela de rotas que estejam na zona A.
   * Vá em **"Rotas"** e clique em **editar rotas**.
   
@@ -139,22 +144,26 @@ As Tabelas de Rotas (Route Tables) são um conjunto de regras que atuam como o "
 * Clique em **Salvar configurações**
 
 <img width="1630" height="493" alt="image" src="https://github.com/user-attachments/assets/ea7276d4-7509-4f41-a46f-5b7c468f4e04" />
+
 - Vá em **"Associações de sub-rede"**.
 - Clique em **"Editar associações de sub-rede**
 
 <img width="1895" height="674" alt="image" src="https://github.com/user-attachments/assets/5dc1bcec-fbec-4644-9e6a-9bb90c841330" />
-- Selecione a subnet-private(app1) e subnet-private(app2).
-- Clique **"Salvar associações"**.
 
-wordpress-rtb-private2-us-east-2b: aqui é onde irão as outras duas subnets privadas.
+ - Vá em **"Associações de sub-rede"** e associe as seguintes sub-redes:
+    - `wordpress-subnet-private(app)1-us-east-2a`
+    - `wordpress-subnet-private(data)1-us-east-2a`
+ - Clique em **"Salvar associações"**.
+
+wordpress-rtb-private2-us-east-2b: Esta tabela atenderá as sub-redes privadas da Zona B.
 * Clique novamente em **"adicionar rotas"**.
 * **Destino:** `0.0.0.0/0`
 * **Alvo: Gateway NAT**
 * Selecione seu NAT Gateway B
 * Clique em **Salvar configurações**
-* Vá em **"Associações de sub-rede"**.
-* Clique em **"Editar associações de sub-rede**
-* Selecione a subnet-private(app1) e subnet-private(app2).
+  - Vá em **"Associações de sub-rede"** e associe as seguintes sub-redes:
+    - `wordpress-subnet-private(app)2-us-east-2b`
+    - `wordpress-subnet-private(data)2-us-east-2b`
 * Clique **"Salvar associações"**.
 
 
@@ -162,7 +171,7 @@ wordpress-rtb-private2-us-east-2b: aqui é onde irão as outras duas subnets pri
 
 <img width="1640" height="530" alt="image" src="https://github.com/user-attachments/assets/5eed27a5-4a1a-464a-b20b-f036ea881e42" />
 
-Ao final desse processo, o mapa de recursos devem estar parecido com esse mostrado na imagem.
+Ao final desse processo, o mapa de recursos deve estar parecido com esse mostrado na imagem.
   
 
 
