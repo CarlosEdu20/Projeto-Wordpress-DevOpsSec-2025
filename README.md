@@ -313,7 +313,7 @@ Criaremos novamente outro grupo de segurança, adicionando o nome, selecionando 
 
 Essa configuração adicionada permite que apenas as EC2 do projeto acessem os arquivos do EFS e impedem que qualquer outro recurso (interno ou externo) consiga montar ou ler o sistema de arquivos. Logo após adicionar essas configurações, clique em "Criar grupo de segurança.
 
-## Etapa 3: Criação do banco de dados Amazon RDS (Relational Database System)
+## Etapa 3: Criação do banco de dados Amazon RDS (Relational Database Service)
 Para que dados como posts, usuários e configuração possam persistir na aplicação, precisamos de um banco de dados para que essa possibilidade seja possível, com isso, vamos usar o **Amazon RDS (Relational Database System).** O RDS é um serviço de banco de dados relacional gerenciado, o que significa que a AWS automatiza tarefas complexas e repetitivas, como provisionamento de hardware, instalação de um sistema operacional, aplicação de patches de segurança e backups. Isso nos permite focar no desenvolvimento da aplicação em si, ao invés de gerenciar o banco de dados.
 
 As configurações escolhidas para o RDS foram:
@@ -325,8 +325,57 @@ As configurações escolhidas para o RDS foram:
   
 * **Disponibilidade (Multi-AZ):** Visando o controle de custos para este ambiente de aprendizado, a funcionalidade de Multi-AZ foi desativada. Em um ambiente de produção real, ativar o Multi-AZ é uma melhor prática crucial, pois cria uma réplica de standby do banco de dados em outra Zona de Disponibilidade, garantindo a recuperação automática e rápida em caso de falha da instância primária.
 
+## Etapa 3.1: Passo a passo da criação do RDS
+No console da AWS, na barra de busca, pesquise por "RDS" e selecione o serviço.
+
+<img width="702" height="114" alt="image" src="https://github.com/user-attachments/assets/2170e0b8-ab15-4933-951e-6746e927a2dd" />
+
+- Na página do RDS vá em **"Banco de dados"** e depois clique em **"Criar banco de dados"**.
+
+<img width="1887" height="839" alt="image" src="https://github.com/user-attachments/assets/dc84ba08-e8c8-4efe-86a2-fc4bb2f762f9" />
+
+- **Escolher um método de criação de banco de dados**: `Criação Padrão`.
+- **Opção de mecanismo:** `MySQL`.
+- **Edição:** `MySQL Community`.
+- **Versão do mecanismo:** Deixe a versão padrão selecionada pela AWS, que geralmente é a mais recente e estável, ou escolha uma versão específica da série 8.0.x, se necessário.
+
+<img width="1888" height="839" alt="image" src="https://github.com/user-attachments/assets/d2adef93-6617-4855-bbcc-fdf7d2956799" />
+
+- **Modelos:** `Nível gratuito`.
+- **Disponibilidade e durabilidade:** `Implantação de instância de banco de dados Single-AZ (1 instância).`
+
+<img width="1895" height="681" alt="image" src="https://github.com/user-attachments/assets/b4510105-724c-4048-9618-3a65b322b296" />
+
+- **Identificador da instância de banco de dados:** Defina um nome para seu banco de dados.
+- **Nome do usuário principal:** Defina o admin do seu banco de dados.
+- **Gerenciamento de credenciais:** Você pode escolher entre autogerenciada, ou seja, gerar automanticamente uma senha ou pode definir uma própria (lembre de anotar essa senha).
+
+<img width="1884" height="792" alt="image" src="https://github.com/user-attachments/assets/af9102eb-1287-4c2b-babf-819987cb147d" />
+
+-  **Configuração da instância:** escolha o `db.t3.micro`.
+-  **Armazenamento:** `SSD de uso geral (gp2)`.
+-  **Armazenamento alocado:** `20 GB`.
+
+<img width="1894" height="840" alt="image" src="https://github.com/user-attachments/assets/fed7b6e7-9a66-4e54-98a8-7e3857a007f2" />
+
+- **Recurso de computação:** Selecione `Não se conectar a um recurso de computação do EC2`.
+- **Tipo de rede:** `IPv4`.
+- **Nuvem privada virtual (VPC):** Selecione sua VPC já criada.
+- **Grupo de sub-redes de banco de dados:** Criar novo grupo de sub-redes do banco de dados.
+- **Acesso público:** Selecione **Não**.
+
+  <img width="1887" height="665" alt="image" src="https://github.com/user-attachments/assets/6b2c8edb-6944-4eb0-b758-b2394a3f03ae" />
+
+- **Grupo de segurança de VPC (firewall):** Selecione sua VPC existente.
+- **Grupos de segurança da VPC existentes:** Selecione seu security group do RDS.
+- **Zona de disponibilidade:** `us-east-2a`.
+
+Após clicar em "Criar banco de dados", o provisionamento será iniciado. Aguarde alguns minutos até que o status do banco de dados mude de "Criando" para "Disponível" antes de prosseguir.
+
+
+
 ## Etapa 4: Criação do Amazon EFS (Elastic File System)
- **Amazon EFS (Elastic File System)** é um serviço da AWS que atua como um sistema de arquivos centralizado e compartilhado, semelhante a um “HD de rede” na nuvem da AWS. Ele fornece armazenamento escalável e de alta disponibilidade, permitindo que múltiplas instâncias EC2 acessem os mesmos arquivos simultaneamente. Sua implementação é essencial para garantir a **persistência e consistência dos dados** em arquiteturas com mais de uma instância. Por exemplo, se um usuário fizer upload de uma imagem para a instância **A**, a instância **B** não terá acesso a esse arquivo caso utilize apenas armazenamento local, o que pode gerar falhas e inconsistências na aplicação. Com o EFS, todos os arquivos ficam centralizados, garantindo que qualquer instância conectada tenha acesso imediato às alterações realizadas por outra, eliminando problemas de sincronização e preservando a integridade dos dados.
+**Amazon EFS (Elastic File System)** é um serviço da AWS que atua como um sistema de arquivos centralizado e compartilhado, semelhante a um “HD de rede” na nuvem da AWS. Ele fornece armazenamento escalável e de alta disponibilidade, permitindo que múltiplas instâncias EC2 acessem os mesmos arquivos simultaneamente. Sua implementação é essencial para garantir a **persistência e consistência dos dados** em arquiteturas com mais de uma instância. Por exemplo, se um usuário fizer upload de uma imagem para a instância **A**, a instância **B** não terá acesso a esse arquivo caso utilize apenas armazenamento local, o que pode gerar falhas e inconsistências na aplicação. Com o EFS, todos os arquivos ficam centralizados, garantindo que qualquer instância conectada tenha acesso imediato às alterações realizadas por outra, eliminando problemas de sincronização e preservando a integridade dos dados.
 
 As seguintes configurações serão usadas no EFS:
 
