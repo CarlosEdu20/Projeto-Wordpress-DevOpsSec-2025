@@ -1,5 +1,6 @@
 #!/bin/bash
-sleep 25
+set -e
+sleep 45
 apt update -y
 
 apt install -y apt-transport-https ca-certificates curl software-properties-common nfs-common
