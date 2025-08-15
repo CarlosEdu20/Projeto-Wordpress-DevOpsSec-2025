@@ -62,7 +62,7 @@ A base de toda a arquitetura desta aplicação está na AWS VPC (Virtual Private
 
   * **Tabelas de Rotas** foram configuradas para controlar o fluxo de tráfego.
 
-## Etapa 1.2: Passo a passo para criação da VPC na AWS
+## Etapa 1.1: Passo a passo para criação da VPC na AWS
 Para facilitar a criação de VPCs, a AWS possui uma maneira mais rápida e eficiente para subir uma VPC na mesma, que é através do assistente "VPC e muito mais". Siga os passos a seguir:
 - Na barra de pesquisa do console, pesquise por VPC.
 
@@ -91,7 +91,7 @@ Para facilitar a criação de VPCs, a AWS possui uma maneira mais rápida e efic
 
 * Agora clique em **Criar VPC.**
 
-## Etapa 1.3: NAT Gateway (A saída segura para a Internet)
+## Etapa 1.2: NAT Gateway (A saída segura para a Internet)
 As instâncias EC2 nas sub-redes privadas (App e Data) estão seguras, pois não podem ser acessadas diretamente da internet já que não recebem IPs. No entanto, elas precisam de uma forma de se conectar com as conexões de internet para tarefas essenciais, como baixar as atualizações de pacotes do Ubuntu (`apt update`) ou baixar as imagens Docker.
 
 É nesse cenário que entra o **NAT (Network Address Translation) Gateway**. Ele atua como uma "ponte" segura, posicionado nas sub-redes públicas. O fluxo de tráfego funciona da seguinte forma:
@@ -101,7 +101,7 @@ As instâncias EC2 nas sub-redes privadas (App e Data) estão seguras, pois não
 -  O NAT Gateway, que possui um endereço de IP público (IP Elástico), encaminha a solicitação para a o Internet Gateway, que possui acesso à internet, em nome da instância privada.
 -  A resposta da internet volta para o NAT Gateway, que a repassa para a instância privada original.
 
-## Etapa 1.4: Criação do NAT Gateway
+## Etapa 1.3: Criação do NAT Gateway
 
 **Crie os IPs Públicos (Elastic IPs):**
 - O NAT Gateway precisa de um endereço de IP público fixo.
@@ -124,7 +124,7 @@ Foram criados dois NAT Gateways, um em cada Zona de Disponibilidade, para garant
 - **ID de alocação do IP elástico:** Selecione o primeiro IP Elástico que você criou.
 - Repita o processo para criar o nat-gateway-b, mas desta vez, associe-o à segunda sub-rede publica (public-subnet-b) e ao segundo IP Elástico.
 
-## Etapa 1.5: Configure as Tabelas de Rotas Privadas 
+## Etapa 1.4: Configure as Tabelas de Rotas Privadas 
 As Tabelas de Rotas (Route Tables) são um conjunto de regras que atuam como o "GPS" da VPC, determinando para onde o tráfego de rede originado das sub-redes é direcionado. Para essa arquitetura, criei um esquema de roteamento resiliente e seguro com três tabelas principais:
 
 - **wordpress-rtb-public:** Esta tabela deve estar associada às duas sub-redes públicas. Verifique na aba "Rotas" se a rota de destino 0.0.0.0/0 aponta para o **Internet Gateway (IGW)**, como mostra a imagem.
