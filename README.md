@@ -463,7 +463,6 @@ Ao final desses passos, o template será mostrado no painel.
 <img width="1661" height="391" alt="image" src="https://github.com/user-attachments/assets/482d3462-4014-44e1-880a-c28bbd8e840b" />
 
 
-<img width="1912" height="815" alt="image" src="https://github.com/user-attachments/assets/7d41578d-a373-409c-bd77-614f4b16879f" />
 
 ## Etapa 5: Balanceamento de Carga com Application Load Balancer (ALB)
 
