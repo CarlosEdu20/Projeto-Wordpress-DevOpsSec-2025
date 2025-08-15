@@ -174,25 +174,10 @@ wordpress-rtb-private2-us-east-2b: Esta tabela atenderá as sub-redes privadas d
 Ao final desse processo, o mapa de recursos deve estar parecido com esse mostrado na imagem.
   
 
-
-
-
-## Etapa 2: Criação do banco de dados Amazon RDS (Relational Database System)
-Para que dados como posts, usuários e configuração possam persistir na aplicação, precisamos de um banco de dados para que essa possibilidade seja possível, com isso, vamos usar o **Amazon RDS (Relational Database System).** O RDS é um serviço de banco de dados relacional gerenciado, o que significa que a AWS automatiza tarefas complexas e repetitivas, como provisionamento de hardware, instalação de um sistema operacional, aplicação de patches de segurança e backups. Isso nos permite focar no desenvolvimento da aplicação em si, ao invés de gerenciar o banco de dados.
-
-As configurações escolhidas para o RDS foram:
-* **Mecanismo (Engine):** Foi escolhido o MySQL Community, versão 8.0.42, ele é um dos sistemas de gerenciamento de banco de dados de código aberto mais populares do mundo e totalmente compatível com os requisitos do WordPress.
-  
-* **Tipo de Instância:** Para esse projeto bem simples e didático e para reduzir os custos, foi selecionada a instância `db.t3.micro`. Ela faz parte da família de instâncias "burstable", oferecendo um desempenho de linha de base com a capacidade de "burst" (picos de performance) para lidar com cargas de trabalho variáveis, ideal para um site com tráfego de baixo a moderado.
-  
-* **Posicionamento na Rede:** O banco de dados foi estrategicamente posicionado na camada mais segura da rede: as sub-redes privadas de dados. Essa configuração garante que ele não tenha nenhuma exposição à internet e só possa ser acessado pela nossa camada de aplicação (as instâncias EC2), conforme definido pelas regras do Security Group do RDS.
-  
-* **Disponibilidade (Multi-AZ):** Visando o controle de custos para este ambiente de aprendizado, a funcionalidade de Multi-AZ foi desativada. Em um ambiente de produção real, ativar o Multi-AZ é uma melhor prática crucial, pois cria uma réplica de standby do banco de dados em outra Zona de Disponibilidade, garantindo a recuperação automática e rápida em caso de falha da instância primária.
-
-## Etapa 2.1: Security Groups
+## Etapa 2: Security Groups
 Os Security Groups (SGs) atuam como firewalls virtuais para nossos recursos na nuvem. Eles são o principal mecanismo de controle de tráfego, funcionando como porteiros que decidem exatamente quem pode entrar e em qual porta. Para este projeto, criei uma "cadeia de confiança" entre os SGs, garantindo o princípio do menor privilégio, onde cada camada só confia na camada imediatamente anterior a ela.
 
-## Etapa 2.2: Criação do Security group Application Load Balancer
+## Etapa 2.1: Criação do Security group Application Load Balancer
 Este primeiro Security Group irá atuar como uma **porta de entrada principal** da aplicação, controlando todo o tráfego que chega da internet ao **Application Load Balancer (ALB)**. Ele define as regras que determinam quais conexões externas podem acessar a camada de balanceamento, garantindo segurança e filtragem antes que os dados da internet sejam encaminhado para as instâncias EC2.
 
 - Na barra de pesquisa do console, digite por **"EC2"**. 
@@ -212,71 +197,103 @@ Este primeiro Security Group irá atuar como uma **porta de entrada principal** 
 
 <img width="1893" height="603" alt="image" src="https://github.com/user-attachments/assets/af4fdc39-83d0-42fa-a02d-bf25310ab176" />
 
-- Regras de entrada:
-  * **Tipo:** HTTP
-  * **Protocolo:** TCP
-  * **Intervalos de portas:** 80
-  * **Origem:** Qualquer lugar-IPv4 (0.0.0.0/0).
+Adicione as seguintes regras de entrada:
+**Regras de entrada:**
+  * **Tipo:** `HTTP`.
+  * **Protocolo:** `TCP`.
+  * **Intervalos de portas:** `80`.
+  * **Origem:** `Qualquer lugar-IPv4 (0.0.0.0/0)`.
  
-justificativa: A origem 0.0.0.0/0 é utilizada para que o Application Load Balancer é o ponto de acesso público do WordPress e precisa aceitar conexões de qualquer usuário da internet.
+justificativa: A origem 0.0.0.0/0 é utilizada para que o Application Load Balancer seja o único ponto de acesso público do WordPress e precisa aceitar conexões de qualquer usuário da internet.
 
-- Regras de saída:
+- **Regras de saída:**
 Você pode manter a regra padrão (Todo o tráfego para 0.0.0.0/0). O Load Balancer precisa dessa regra para encaminhar o tráfego para as instâncias EC2.
 
-- Clique em **"Criar grupo de segurança"**. 
+- Clique em **"Criar grupo de segurança"**.
+
+## Etapa 2.2: Criação do Security Group do Bastion Host
+O Security Group do Bastion atua como uma porta de entrada fortificada para o acesso administrativo da rede privada. Diferente do ALB, que é público, a função deste SG é ser extremamente restritivo. Ele define as regras que permitem conexões `SSH` (Secure Shell), garantindo que apenas administradores autorizados, de endereços de IP conhecidos, possam acessar o Bastion Host. Este servidor, por sua vez, servirá como um "ponto de pulo" (jump host) seguro para as instâncias EC2 privadas.
+
+- No painel da EC2, vá em **"Rede e segurança"** e depois em **"Grupos de segurança"**.
+- Clique em **"Criar Grupo de Segurança"**.
+
+<img width="1883" height="583" alt="image" src="https://github.com/user-attachments/assets/def89828-e8b7-40d6-bc3a-d967123f8a06" />
+
+- Insira o nome do grupo de segurança.
+
+- Adicione alguma descrição para não se perder.
+
+- Selecione a VPC que você criou.
+
+<img width="1892" height="535" alt="image" src="https://github.com/user-attachments/assets/31aed00f-1120-47bc-90d2-3bd5d9d66abf" />
+
+Adicione as seguintes regras de entrada:
+- **Regras de entrada:**
+    * **Tipo:** `SSH`
+    * **Protocolo:** `TCP`
+    * **Intervalo de portas:** `22`
+    * **Origem:** `Meu IP`
+    
+**Justificativa:** A origem `Meu IP` é uma medida de segurança crucial e a configuração correta para um Bastion Host. Ela garante que apenas o seu endereço de IP atual possa tentar uma conexão SSH, bloqueando tentativas de acesso de força bruta do resto do mundo e minimizando a superfície de ataque, lembre-se de sempre alterar essa regra caso mude de rede.
+
+- **Regras de saída:**
+Você pode manter a regra padrão (Todo o tráfego para `0.0.0.0/0`). Isso permitirá que o Bastion Host inicie as conexões SSH para as instâncias privadas na sua VPC.
+
+- Clique em **"Criar grupo de segurança"**.
 
 ## Etapa 2.3: Criação do Security Group EC2
 Este Security Group tem o propósito de proteger as instâncias EC2 que rodam os **contêineres Docker com o WordPress.** As regras a seguir foram configuradas para garantir que apenas tráfego autorizado e proveniente de fontes confiáveis chegue até os servidores da aplicação.
 
-- Repita o mesmo processo descrito na criação do security group do ALB.
+- Repita o mesmo processo de criação descrito anteriomente.
 
-- Regras de entradas:
-<img width="1865" height="314" alt="image" src="https://github.com/user-attachments/assets/a9f30326-dc33-410f-9676-1fc376f34951" />
+**Regras de entradas:**
+<img width="1900" height="770" alt="image" src="https://github.com/user-attachments/assets/fb1173e3-530a-4706-a39a-5cd66337da61" />
 
 Aqui foram adicionadas duas regras de entrada:
 - 1° Regra:
-
-  * **Tipo:** HTTP
-  * **Intervalos de portas:** 80 
+  
+  * **Tipo:** `HTTP`
+  * **Intervalos de portas:** `80` 
   * **Origem:** Exclusivamente do Security Group do Application Load Balancer (`alb-security group`).
 
- Esta regra assegura que todo acesso ao WordPress passe primeiro pelo Load Balancer, impedindo conexões diretas vindas da internet para as instâncias EC2. Dessa forma, aplicamos o princípio do menor privilégio e mantemos a arquitetura em camadas (layered security).
+ Esta regra assegura que todo acesso ao WordPress passe primeiro pelo Load Balancer, impedindo conexões diretas vindas da internet para as instâncias EC2. Dessa forma, aplica-se o princípio do menor privilégio e mantemos a arquitetura em camadas (layered security).
 
 - 2° Regra:
 
-  * **Tipo:** TCP Personalizado
-  * **Intervalos de portas:** 8080
-  * **Origem:** Exclusivamente do seu endereço IP, por motivos de segurança, não irei mostrar aqui, mas quando você clicar em **"Meu IP"** irá mostrar seu endereço IP.
-
+  * **Tipo:** `TCP Personalizado`
+  * **Intervalos de portas:** `8080`
+  * **Origem:** `Meu IP`
+  
  Esta regra permite que o administrador acesse a interface do phpMyAdmin pela porta `8080`. Ao restringir a origem a um IP específico, garantimos que esta ferramenta administrativa não fique exposta à internet pública, uma medida de segurança crucial nesta aplicação.
 
+- 3° Regra:
+
+  * **Tipo:** `SSH`
+  * **Intervalo de portas:** `22`
+  * **Origem:** Exclusivamente do Security Group do **Bastion Host**.
+
+Esta regra garante que o único caminho para acessar o terminal de uma instância da aplicação é através do Bastion Host. Isso centraliza o acesso administrativo e remove completamente a exposição da porta SSH das instâncias da aplicação, mesmo para IPs conhecidos.
 
 ## Etapa 2.4: Criação do Security Group RDS
-
-O Security Group RDS foi configurado para proteger o banco de dados relacional utilizado pelo WordPress. Seu objetivo é restringir ao máximo o acesso, permitindo conexões apenas das instâncias EC2 autorizadas.
+O Security Group RDS foi configurado para proteger o banco de dados MySQL utilizado pelo WordPress. Seu objetivo é restringir ao máximo seu acesso, permitindo conexões apenas das instâncias EC2 autorizadas.
 
 Vamos novamente criar um novo grupo de segurança, adicionando o nome, selecionando a VPC que foi criada, porém vamos adicionar a seguinte regra de entrada.
 
 <img width="1905" height="631" alt="image" src="https://github.com/user-attachments/assets/d665c394-bb9c-4fb0-9c50-88a36e73ffb6" />
 
-* **Tipo:** MYSQL/Aurora
+* **Tipo:** `MYSQL/Aurora`
 
-* **Protocolo:** TCP
+* **Protocolo:** `TCP`
 
-* **Intervalo de portas:** 3306
+* **Intervalo de portas:** `3306`
 
-* **Origem:** Personalizado
-
-* Adicione o security group da EC2
+* **Origem:** Exclusivamente vindo do security group da EC2.
 
 * As regras de saída serão mantidas padrão
 
 Essa configuração permite que somente as EC2 que executam o WordPress possam se conectar ao banco de dados RDS, impedindo qualquer acesso direto da internet ou de outros serviços não autorizados. Logo após as configurações, clique em "Criar grupo de Segurança.
 
-
-
 ## Etapa 2.5: Criação do Security Group para o EFS
-
 O Security Group EFS foi criado para proteger o sistema de arquivos compartilhado utilizado pelas instâncias EC2 para armazenar conteúdos persistentes do WordPress. Sua função é garantir que apenas instâncias autorizadas possam montar e acessar os arquivos do EFS.
 
 Criaremos novamente outro grupo de segurança, adicionando o nome, selecionando a VPC já criada e adicionando as seguintes regras de entrada.
@@ -284,13 +301,13 @@ Criaremos novamente outro grupo de segurança, adicionando o nome, selecionando 
 
 <img width="1905" height="504" alt="image" src="https://github.com/user-attachments/assets/6ed92812-c6f3-4cf3-bfad-74940ea06197" />
 
-* **Tipo:** NFS
+* **Tipo:** `NFS`
 
-* **Protocolo:** TCP
+* **Protocolo:** `TCP`
 
-* **Intervalo de portas: **2049
+* **Intervalo de portas: `2049`
 
-* Origem: Exclusivamente do Security Group das instâncias EC2 (seu grupo de segurança da EC2).
+* Origem: Exclusivamente do Security Group das instâncias EC2.
 
 * As regras de saída serão mantidas como padrão
 
