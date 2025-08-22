@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+sudo su
 sleep 45
 apt update -y
 
